@@ -7,6 +7,7 @@
  :aliases
  {:dev
   {:extra-paths ["test"]
+   ;; Reap is useful on the REPL
    :extra-deps {juxt/reap
                 {:git/url "https://github.com/juxt/reap.git"
                  :sha "21e8f057e313d0bee1961d69d18d75d8e1d970fd"}}}
@@ -16,6 +17,7 @@
          {com.cognitect/test-runner
           {:git/url "https://github.com/cognitect-labs/test-runner.git"
            :sha "028a6d41ac9ac5d5c405dfc38e4da6b4cc1255d5"}
+          ;; Reap is used in the tests, but the source does not require it
           juxt/reap
           {:git/url "https://github.com/juxt/reap.git"
            :sha "21e8f057e313d0bee1961d69d18d75d8e1d970fd"}}
