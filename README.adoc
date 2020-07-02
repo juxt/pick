@@ -11,49 +11,34 @@ STATUS: Alpha. Still fresh, some development remaining.
 
 Suppose you are writing a web service and want to provide proactive content negotiation based on the accept headers in the client request. Suppose also that have established which variants you want to choose between.
 
-A variant is represented as a Clojure map:
+A variant is represented by data, for example:
 
 [source,clojure]
 ----
-{:juxt.http/content-type {:juxt.http/type "text"
-                          :juxt.http/subtype "html"
-                          :juxt.http/parameter-map {"charset" "utf-8"}
-                          }
+{:juxt.http/content-type
+  {:juxt.http/type "text"
+   :juxt.http/subtype "html"
+   :juxt.http/parameter-map {"charset" "utf-8"}}
  :juxt.http/content-encoding "gzip,deflate"
- :juxt.http/content-language "en-US"
- }
+ :juxt.http/content-language "en-US"}
 ----
-
-[TIP]
---
-If you prefer to specify these values as string literals, use our https://github.com/juxt/reap[reap] library.
-
-[source,clojure]
-----
-(require '[juxt.reap.alpha.decoders :as reap]
-
-{:juxt.http/content-type (reap/content-type "text/html;charset=utf-8")
- :juxt.http/content-encoding (reap/content-encoding "gzip,deflate")
- :juxt.http/content-language (reap/content-language "en-US")
- }
-----
-
---
 
 You can use *pick* to select the variant that is most acceptable to the user agent. Here's how:
 
 [source,clojure]
 ----
-(require '[juxt.pick.apache :refer [select-variant]])
+(require
+  '[juxt.pick.alpha.core :refer [select-variant]]
+  '[juxt.pick.alpha.apache :refer [apache]])
 
 (select-variant
- {:juxt.http/request-headers {…} ; Parseding request headers
-  :juxt.http/variants […] ; Collection of maps, each representing a possible variant
-  :juxt.http/explain? false})
+  apache
+  {:juxt.http/request-headers {…}
+   :juxt.http/variants […]})
 =>
 {:juxt.http/variant {…}; variant chosen
  :juxt.http/vary […] ; request headers used in the determination
- }
+}
 
 ----
 
@@ -62,23 +47,28 @@ You can use *pick* to select the variant that is most acceptable to the user age
 Content negotiation is a feature of HTTP that allows different 'representations'
 to be served from the same URI.
 
-*pick* is a Clojure library implementing Apache's _de-facto_ http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm[content negotiation algorithm].
+*pick* is a Clojure library that determines quality values of each of the
+negotiable dimensions and corresponding rules specified in RFC 7231. These can
+be used by content negotiation algorithms to determine the most appropriate
+content to respond with.
+
+*pick* _also_ includes a built-in reference implementation based on Apache's _de-facto_ http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm[content negotiation algorithm].
 
 === Problem Statement
 
-The web is the most dominant form of information exchange on the
-internet. Content negotiation is one of the primary ways that the web is
+Content negotiation is one of the primary ways that the web is
 inclusive, supporting a wide range of user agents and other software-based
 clients.
 
-It improves performance, by allowing the compression of content for optimising
-network bandwidth and by cache integration.
+Content negotiation can also contribute to improved performance, by allowing the
+compression of content for optimising network bandwidth and by cache
+integration.
 
-And since content negotiation allows for gradual migration from old to new data
-formats it enables graceful and continuous improvement, balancing the needs for
-both innovation and solid dependability.
+Also, since content negotiation allows for gradual migration from old to new
+data formats it enables graceful and continuous improvement, balancing the needs
+for both innovation and solid dependability.
 
-However, while content negotiation is often used for static resources, and is
+However, while content negotiation is often used for static resources, which is
 well implemented by web servers such as Apache's httpd and nginx, it is often
 missing from, or poorly implemented by, the majority of web libraries and
 frameworks.
@@ -99,12 +89,11 @@ request/response bodies
 
 [CAUTION]
 --
-*pick* only provides the decision logic of which variant to select,
+*pick* only provides the decision of which variant to select,
 given the context of an HTTP request and a set of variants to choose between.
 
-It
-does *not* include support for format transformation or coercion, which is _not
-in scope_ for this library.
+It does *not* include support for format transformation or coercion, which is
+_not considered in scope_ for this library.
 --
 
 https://github.com/clojure-liberator/liberator/commits/master[Liberator]
@@ -116,19 +105,48 @@ https://github.com/juxt/yada[yada]
 
 NOTE: TBD
 
+=== Variants
+
+NOTE: TBD
+
 === Selecting a variant
 
-Use the `juxt.pick.alpha.apache/select-variant` function.
+Use the `juxt.pick.alpha.core/select-variant` function, with the algorithm as
+the first argument.
+
+[TIP]
+--
+If you prefer to specify these values as string literals, use our https://github.com/juxt/reap[reap] library.
+
+[source,clojure]
+----
+(require '[juxt.reap.alpha.decoders :as reap]
+
+{:juxt.http/content-type (reap/content-type "text/html;charset=utf-8")
+ :juxt.http/content-encoding (reap/content-encoding "gzip,deflate")
+ :juxt.http/content-language (reap/content-language "en-US")
+}
+----
+
+--
 
 NOTE: Document the argument map
 
 === Media-types
 
+NOTE: TBD
+
 === Charsets
+
+NOTE: TBD
 
 === Encodings
 
+NOTE: TBD
+
 === Languages
+
+NOTE: TBD
 
 == References
 
