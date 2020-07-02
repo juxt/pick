@@ -1,0 +1,26 @@
+;; Copyright © 2020, JUXT LTD.
+
+{:paths ["src"]
+ :deps
+ {}
+
+ :aliases
+ {:dev
+  {:extra-paths ["test"]
+   :extra-deps {juxt/reap
+                {:git/url "https://github.com/juxt/reap.git"
+                 :sha "21e8f057e313d0bee1961d69d18d75d8e1d970fd"}}}
+
+  :test {:extra-paths ["test"]
+         :extra-deps
+         {com.cognitect/test-runner
+          {:git/url "https://github.com/cognitect-labs/test-runner.git"
+           :sha "028a6d41ac9ac5d5c405dfc38e4da6b4cc1255d5"}
+          juxt/reap
+          {:git/url "https://github.com/juxt/reap.git"
+           :sha "21e8f057e313d0bee1961d69d18d75d8e1d970fd"}}
+         :main-opts ["-m" "cognitect.test-runner"]}
+
+  :lint
+  {:extra-deps {clj-kondo {:mvn/version "RELEASE"}}
+   :main-opts ["-m" "clj-kondo.main" "--lint" "src/juxt"]}}}
