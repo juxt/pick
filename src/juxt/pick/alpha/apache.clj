@@ -6,7 +6,8 @@
     :refer [assign-content-type-quality
             assign-charset-quality
             assign-encoding-quality
-            assign-language-quality]]))
+            assign-language-quality
+            select-variant]]))
 
 ;; Apache httpd Negotiation Algorithm -- http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
 
@@ -93,7 +94,7 @@
    {:variants [] :rejects []}
    variants))
 
-(defn select-variant
+(defn apache-select-variant
   "Implementation of the Apache httpd content-negotiation algorithm detailed at
   https://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
 
@@ -181,7 +182,9 @@
            (conj {:juxt.http/field-name "accept-charset"}))}
       explain? (assoc :juxt.http/explain explain))))
 
-;; TODO: Produce an 'explain' for each content negotiation that can be
-;; logged/response on a 406 (and to support debugging). Perhaps as a 406 body
-;; but also by using an Expect (which is a 'must understand' semantic) or Prefer
-;; header (which isn't)? See RFC 7240.
+;; Extend the juxt.pick.alpha.core.VariantSelector via metadata
+(def apache
+  (with-meta
+    {:description "Implementation of Apache's content negotiation algorithm"
+     :url "http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm"}
+    {`select-variant (fn [_ opts] (apache-select-variant opts))}))

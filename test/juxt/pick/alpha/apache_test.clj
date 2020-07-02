@@ -3,7 +3,8 @@
 (ns juxt.pick.alpha.apache-test
   (:require
    [clojure.test :refer [deftest is are testing]]
-   [juxt.pick.alpha.apache :refer [select-variant]]
+   [juxt.pick.alpha.core :refer [select-variant]]
+   [juxt.pick.alpha.apache :refer [apache]]
    [juxt.reap.alpha.decoders :as reap]))
 
 (deftest accept-test
@@ -12,6 +13,7 @@
       (= expected-content
          (->
           (select-variant
+           apache
            {:juxt.http/request-headers
             {"accept" (reap/accept accept-header)}
             :juxt.http/variants
@@ -47,6 +49,7 @@
       (=
        expected-id
        (-> (select-variant
+            apache
             {:juxt.http/request-headers
              {"accept-encoding"
               (reap/accept-encoding
@@ -139,6 +142,7 @@
         (= expected-greeting
            (->
             (select-variant
+             apache
              {:juxt.http/request-headers
               {"accept-language" (reap/accept-language accept-language-header)}
               :juxt.http/variants variants})
@@ -160,6 +164,7 @@
     ;; If no Accept-Language header, just pick the first variant.
     (is (= "Hello!"
            (-> (select-variant
+                apache
                 {:juxt.http/request-headers {}
                  :juxt.http/variants variants})
                (get-in [:juxt.http/variant :juxt.http/content]))))
@@ -170,6 +175,7 @@
      (=
       "Bonjour!"
       (-> (select-variant
+           apache
            {:juxt.http/request-headers
             {"accept-language" (reap/accept-language "en")}
             :juxt.http/variants
@@ -184,6 +190,7 @@
 (deftest integrated-test
   (is
    (select-variant
+    apache
     {:juxt.http/request
      {"accept" (reap/accept "text/html")}
      :juxt.http/variants
@@ -231,6 +238,7 @@
 
         select-explain
         (select-variant
+         apache
          {:juxt.http/request request
           :juxt.http/variants variants
           :juxt.http/explain? true})
@@ -243,6 +251,7 @@
        (nil?
         (find
          (select-variant
+          apache
           {:juxt.http/request request
            :juxt.http/variants variants
            :juxt.http/explain? false})
@@ -253,6 +262,7 @@
        (nil?
         (find
          (select-variant
+          apache
           {:juxt.http/request request
            :juxt.http/variants variants})
          :juxt.http/explain))))

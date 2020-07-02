@@ -360,3 +360,7 @@
                1.0))]
        (cond-> variant
          qvalue (conj [:juxt.http.content-negotiation/language-qvalue qvalue]))))))
+
+(defprotocol VariantSelector
+  :extend-via-metadata true
+  (select-variant [_ opts]))
