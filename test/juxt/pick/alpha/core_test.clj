@@ -291,22 +291,19 @@
         [{:id :en
           :juxt.http/content "Hello!"
           :juxt.http/content-language
-          (reap/content-language "en")
-          :juxt.http/language-quality-factor 0.5}
+          (reap/content-language "en")}
 
          {:id :en-us
           :juxt.http/content-language
           (reap/content-language "en-US")
           ;; https://en.wikipedia.org/wiki/Howdy
           ;; Not everyone in the US uses 'Howdy!' but this is just a test...
-          :juxt.http/content "Howdy!"
-          :juxt.http/language-quality-factor 0.5}
+          :juxt.http/content "Howdy!"}
 
          {:id :ar-eg
           :juxt.http/content-language
-          (reap/content-language "ar-eg,en")
-          :juxt.http/content "ألسّلام عليكم"
-          :juxt.http/language-quality-factor 0.5}
+          (reap/content-language "ar-eg")
+          :juxt.http/content "ألسّلام عليكم"}
 
          ;; TODO: Test for when no content-language is specified - what should
          ;; we default to?

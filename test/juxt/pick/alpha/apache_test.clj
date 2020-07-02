@@ -179,13 +179,18 @@
            {:juxt.http/request-headers
             {"accept-language" (reap/accept-language "en")}
             :juxt.http/variants
-            (conj
-             variants
-             {:id :fr-fr
-              :juxt.http/content "Bonjour!"
-              :juxt.http/content-language (reap/content-language "fr-FR")
-              :juxt.http/language-quality-factor 1.0})})
+            (->
+             (map
+              (fn [v]
+                (assoc v :juxt.http.content-negotiation.apache/language-quality-factor 0.5))
+              variants)
+             (conj
+              {:id :fr-fr
+               :juxt.http/content "Bonjour!"
+               :juxt.http/content-language (reap/content-language "fr-FR")
+               :juxt.http.content-negotiation.apache/language-quality-factor 1.0}))})
           (get-in [:juxt.http/variant :juxt.http/content]))))))
+
 
 (deftest integrated-test
   (is

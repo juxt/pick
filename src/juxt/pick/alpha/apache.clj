@@ -134,7 +134,10 @@
               (assoc result :phase "select highest content type quality factor")))
 
           (fn [variants]
-            (let [result (segment-by variants #(get % :juxt.http/language-quality-factor 1.0) >)]
+            (let [result
+                  (segment-by
+                   variants
+                   #(get % :juxt.http.content-negotiation.apache/language-quality-factor 1.0) >)]
               (assoc result :phase "select highest language quality factor")))
 
           (fn [variants]
@@ -180,7 +183,7 @@
            (conj {:juxt.http/field-name "accept-language"})
            (> (count (distinct (keep (comp #(get % "charset") :juxt.http/parameter-map :juxt.http/content-type) variants))) 1)
            (conj {:juxt.http/field-name "accept-charset"}))}
-      explain? (assoc :juxt.http/explain explain))))
+        explain? (assoc :juxt.http/explain explain))))
 
 ;; Extend the juxt.pick.alpha.core.VariantSelector via metadata
 (def apache
