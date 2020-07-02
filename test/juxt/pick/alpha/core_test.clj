@@ -11,7 +11,8 @@
    [juxt.reap.alpha.decoders :as reap]))
 
 (defn round [n]
-  (/ (Math/rint (* n 100000)) 100000))
+  (when n
+    (/ (Math/rint (* n 100000)) 100000)))
 
 ;; TODO: test for content-type-match?
 
@@ -75,28 +76,28 @@
 ;; See RFC 7231 Section 5.3.3: Accept-Charset
 
 (deftest acceptable-charset-rating-test
-  (are [accept-charset content-type expected]
+  (are [accept-charset charset expected]
       (= expected
          (->
           (acceptable-charset-rating
            (reap/accept-charset accept-charset)
-           (reap/content-type content-type))
+           charset)
           (select-keys [:qvalue :precedence])))
 
-      "iso-8859-5, unicode-1-1;q=0.8"
-      "text/plain;charset=iso-8859-5"
+    "iso-8859-5, unicode-1-1;q=0.8"
+      "iso-8859-5"
       {:qvalue 1.0 :precedence 2}
 
       "iso-8859-5, unicode-1-1;q=0.8"
-      "text/plain;charset=unicode-1-1"
+      "unicode-1-1"
       {:qvalue 0.8 :precedence 2}
 
       "iso-8859-5, unicode-1-1;q=0.8"
-      "text/plain;charset=utf-8"
+      "utf-8"
       {:qvalue 0.0 :precedence 0}
 
       "iso-8859-5, unicode-1-1;q=0.8,*"
-      "text/plain;charset=utf-8"
+      "utf-8"
       {:qvalue 1.0 :precedence 1}))
 
 ;; See RFC 7231 Section 5.3.4: Accept-Encoding
@@ -314,9 +315,9 @@
           (reap/content-language "ar-eg,en")
           :juxt.http/content "Hello: ألسّلام عليكم"}
 
-         ;; TODO: Test for when no content-language is specified - what should
-         ;; we default to?
-         ]]
+         ;; Unlike with encoding, if no content-language is specified we don't
+         ;; provide a rating. This leaves the decision up to the algorithm.
+         {:id :unspecified}]]
 
     (are [accept-language-header expected]
         (=
@@ -332,25 +333,29 @@
       [[:en 1.0]
        [:en-us 1.0]
        [:ar-eg 0.0]
-       [:ar-eg-and-en 0.0]]
+       [:ar-eg-and-en 0.0]
+       [:unspecified nil]]
 
       "en-us"
       [[:en 0.0]
        [:en-us 1.0]
        [:ar-eg 0.0]
-       [:ar-eg-and-en 0.0]]
+       [:ar-eg-and-en 0.0]
+       [:unspecified nil]]
 
       "ar-eg"
       [[:en 0.0]
        [:en-us 0.0]
        [:ar-eg 1.0]
-       [:ar-eg-and-en 0.0]]
+       [:ar-eg-and-en 0.0]
+       [:unspecified nil]]
 
       "ar"
       [[:en 0.0]
        [:en-us 0.0]
        [:ar-eg 1.0]
-       [:ar-eg-and-en 0.0]]
+       [:ar-eg-and-en 0.0]
+       [:unspecified nil]]
 
       "en-us,en;q=0.8,ar;q=0.2"
       [[:en 0.8]
@@ -358,16 +363,19 @@
        [:ar-eg 0.2]
        ;; Both en and ar-eg languages understood, the quality value is the
        ;; result of muliplying qvalues for en (0.8) an ar (0.2)
-       [:ar-eg-and-en 0.16]]
+       [:ar-eg-and-en 0.16]
+       [:unspecified nil]]
 
       "*"
       [[:en 1.0]
        [:en-us 1.0]
        [:ar-eg 1.0]
-       [:ar-eg-and-en 1.0]]
+       [:ar-eg-and-en 1.0]
+       [:unspecified nil]]
 
       "en-us,*;q=0.1"
       [[:en 0.1]
        [:en-us 1.0]
        [:ar-eg 0.1]
-       [:ar-eg-and-en 0.01]])))
+       [:ar-eg-and-en 0.01]
+       [:unspecified nil]])))

@@ -7,6 +7,26 @@
    [juxt.pick.alpha.apache :refer [apache]]
    [juxt.reap.alpha.decoders :as reap]))
 
+(select-variant
+           apache
+           {:juxt.http/request-headers
+            {"accept" (reap/accept "text/html")}
+            :juxt.http/variants
+            [{:id :html
+              :juxt.http/content "<h1>Hello World!</h1>"
+              :juxt.http/content-type
+              (reap/content-type "text/html;charset=utf-8")}
+
+             {:id :html-level-2
+              :juxt.http/content "<h1>Hello World!</h1>"
+              :juxt.http/content-type
+              (reap/content-type "text/html;level=2;charset=utf-8")}
+
+             {:id :plain-text
+              :juxt.http/content "Hello World!"
+              :juxt.http/content-type
+              (reap/content-type "text/plain;charset=utf-8")}]})
+
 (deftest accept-test
 
   (are [accept-header expected-content]

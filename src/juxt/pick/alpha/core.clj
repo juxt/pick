@@ -76,12 +76,10 @@
        [:precedence precedence]
        [:apex.debug/parsed-accept-field parsed-accept-field]))))
 
-;; TODO: Support nil arg
 (defn acceptable-content-type-rating
   "Determine the given content-type's rating (precedence, qvalue) with respect to
-  what is acceptable. The parsed-accept-header parameter is a data structure
-  returned from parsing the Accept header with reap. The variant is a map
-  corresponding to the resource of the variant.
+  what is acceptable. The parsed-accept-header parameter is sequence returned
+  from parsing the Accept header (with reap).
 
   This function determines the qvalue according to rules of precedence in RFC
   7231 Section 5.3.2 which are independent of the actual content negotation
@@ -90,42 +88,44 @@
   The qvalue is set to 0 if 'not acceptable' (See RFC 7231 Section 5.3.1). This
   still gives the content negotiation algorithm the chance of returning a
   variant, if there are no more preferable variants and if returning one is
-  preferable to returning a 406 status code."
+  preferable to returning a 406 status code.
+
+  The parsed-accept-header argument can be nil, which represents the absence of
+  the header: 'A request without any Accept header field implies that the user
+  agent will accept any media type in response' -- RFC 7231 Section 5.3.2"
 
   [parsed-accept-header parsed-content-type]
 
-  (reduce
-   select-better-content-type-match
-   {:qvalue 0.0
-    :content-type parsed-content-type}
-   parsed-accept-header))
+  (assert parsed-content-type)
+
+  (if (seq parsed-accept-header)
+    (reduce
+     select-better-content-type-match
+     {:qvalue 0.0
+      :content-type parsed-content-type}
+     parsed-accept-header)
+    {:qvalue 1.0
+     :content-type parsed-content-type}))
 
 (defn assign-content-type-quality
-  "Return a function that will assign a content-type quality to a variant
-  according to the given (parsed) accept header. '
-
-  'A request without any Accept header field implies that the user agent will
-  accept any media type in response' -- RFC 7231 Section 5.3.2"
+  "Return a function that will assign the content-type quality to a given
+  variant according to the given (parsed) accept header."
   [parsed-accept-header]
   (fn [variant]
     (assert variant)
-    (let [content-type (:juxt.http/content-type variant)]
-      (cond-> variant
-        content-type
-        (assoc
-         :juxt.http.content-negotiation/content-type-qvalue
-         (if parsed-accept-header
-           (:qvalue
-            (acceptable-content-type-rating
-             parsed-accept-header
-             content-type))
-           1.0))))))
+    (if-let [content-type (:juxt.http/content-type variant)]
+      (assoc variant
+             :juxt.http.content-negotiation/content-type-qvalue
+             (:qvalue (acceptable-content-type-rating parsed-accept-header content-type)))
+      ;; No content-type on variant, return variant untouched.
+      variant)))
 
 ;; Charsets
 
 (defn acceptable-charset-rating
-  [parsed-accept-charset-header parsed-content-type]
-  (when-let [charset (get-in parsed-content-type [:juxt.http/parameter-map "charset"])]
+  "(charset cannot be nil)"
+  [parsed-accept-charset-header charset]
+  (if (seq parsed-accept-charset-header)
     (reduce
      (fn [best-match field]
        (cond
@@ -144,7 +144,8 @@
          :else best-match))
      {:qvalue 0.0
       :precedence 0}
-     parsed-accept-charset-header)))
+     parsed-accept-charset-header)
+    {:qvalue 1.0}))
 
 (defn assign-charset-quality
   "Return a function that will assign a charset quality to a variant according to
@@ -155,17 +156,17 @@
   will accept any charset in response.' -- RFC 7231 Section 5.3.3"
   [parsed-accept-charset-header]
   (fn [variant]
-    (let [qvalue
-          (when-let [content-type (:juxt.http/content-type variant)]
-            ;; TODO: This condition can be checked ahead-of-time
-            (if parsed-accept-charset-header
-              (:qvalue
-               (acceptable-charset-rating
-                parsed-accept-charset-header
-                content-type))
-              1.0))]
-      (cond-> variant
-        qvalue (conj [:juxt.http.content-negotiation/charset-qvalue qvalue])))))
+    (assert variant)
+    (if-let [charset (get-in variant [:juxt.http/content-type :juxt.http/parameter-map "charset"])]
+      (assoc
+       variant
+       :juxt.http.content-negotiation/charset-qvalue
+       (:qvalue
+        (acceptable-charset-rating
+         parsed-accept-charset-header
+         charset)))
+      ;; No charset on variant, return variant untouched.
+      variant)))
 
 ;; Encodings
 
@@ -199,8 +200,8 @@
                 ;;
                 ;; -- RFC 7231 Section 5.3.4
                 (= (get entry :juxt.http/content-coding "identity") "identity")
-              1.0
-              0.0)}
+                1.0
+                0.0)}
 
    parsed-accept-encoding-header))
 
@@ -208,14 +209,10 @@
   "Determine the qvalue for the given parsed content-encoding according to the
   given parsed Accept-Encoding header.
 
-  The content-encoding can be nil.
-
-  > If the representation has no content-coding, then it is acceptable by
-  default unless specifically excluded by the Accept-Encoding field stating
-  either 'identity;q=0' or '*;q=0' without a more specific entry for 'identity'.
-  -- RFC 7231 Section 5.3.4
-
-  "
+  The content-encoding can be nil: 'If the representation has no content-coding,
+  then it is acceptable by default unless specifically excluded by the
+  Accept-Encoding field stating either 'identity;q=0' or '*;q=0' without a more
+  specific entry for 'identity'.' -- RFC 7231 Section 5.3.4"
   [parsed-accept-encoding-header parsed-content-encoding]
 
   (double
@@ -240,8 +237,8 @@
   "
   [parsed-accept-encoding-header]
   (fn [variant]
+    (assert variant)
     (let [qvalue
-          ;; TODO: This condition can be checked ahead-of-time
           (if parsed-accept-encoding-header
             (acceptable-encoding-qvalue
              parsed-accept-encoding-header
@@ -300,7 +297,11 @@
 (defn acceptable-language-rating
   "Determine the given language's rating (precedence, qvalue) with respect to what
   is acceptable. The parsed-accept-language-header parameter is a data structure
-  returned from parsing the Accept-Language header with reap.
+  returned from parsing the Accept-Language header with reap. This argument can be nil, meaning
+  that no accept-language header was received:
+
+  'A request without any Accept-Language header field implies that the user
+  agent will accept any language in response.' -- RFC 7231 Section 5.3.5
 
   This function determines the qvalue according to rules of precedence in RFC
   7231 Section 5.3.2 which are independent of the actual content negotation
@@ -309,43 +310,43 @@
   The qvalue is set to 0 if 'not acceptable' (See RFC 7231 Section 5.3.1). This
   still gives the content negotiation algorithm the chance of returning a
   variant, if there are no more preferable variants and if returning one is
-  preferable to returning a 406 status code.
-  "
-
-  ;; TODO: Improve this function by allowing multiple language tags and using
-  ;; multiplication.
+  preferable to returning a 406 status code."
 
   [parsed-accept-language-header parsed-language-tag]
 
-  (reduce
-   select-better-language-match
-   {:qvalue 0.0
-    :language-tag parsed-language-tag}
-   parsed-accept-language-header))
+  (if (seq parsed-accept-language-header)
+    (reduce
+     select-better-language-match
+     {:qvalue 0.0
+      :language-tag parsed-language-tag}
+     parsed-accept-language-header)
+    ;; No accept-language header, this language is therefore acceptable.
+    {:qvalue 1.0
+     :language-tag parsed-language-tag}))
 
 (defn assign-language-quality
   "Return a function that will assign a language quality to a variant according to
-  the given parsed accept-language header. This argument can be nil, meaning
-  that no accept-language header was received.
-
-  'A request without any Accept-Language header field implies that the user
-  agent will accept any language in response.' -- RFC 7231 Section 5.3.5"
+  the given parsed accept-language header."
   [parsed-accept-language-header]
   (fn [variant]
-    (let [qvalue
-          (when-let [content-language (:juxt.http/content-language variant)]
-            (if parsed-accept-language-header
-              (double
-               (apply
-                *
-                (for [lang content-language]
-                  (:qvalue
-                   (acceptable-language-rating
-                    parsed-accept-language-header
-                    lang)))))
-              1.0))]
-      (cond-> variant
-        qvalue (conj [:juxt.http.content-negotiation/language-qvalue qvalue])))))
+    (assert variant)
+    (if-let [content-language (:juxt.http/content-language variant)]
+      (assoc
+       variant
+       :juxt.http.content-negotiation/language-qvalue
+       (if parsed-accept-language-header
+         (double
+          (apply
+           *
+           (for [lang content-language]
+             (:qvalue
+              (acceptable-language-rating
+               parsed-accept-language-header
+               lang)))))
+         ;; No accept-language header, so language is acceptable.
+         1.0))
+      ;; No content-language, so no rating applied.
+      variant)))
 
 (defn rate-variants [request-headers variants]
   (map
