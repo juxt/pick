@@ -10,6 +10,9 @@
             acceptable-encoding-qvalue assign-encoding-quality]]
    [juxt.reap.alpha.decoders :as reap]))
 
+(defn round [n]
+  (/ (Math/rint (* n 100000)) 100000))
+
 ;; TODO: test for content-type-match?
 
 ;; TODO: Refactor and polish these tests so they are consistent with each other. Try to write this tests in a way that references each part of Section 5.3
@@ -145,7 +148,7 @@
         (=
          expected
          (map
-          (juxt :id :juxt.http.content-negotiation/encoding-qvalue)
+          (juxt :id (comp round :juxt.http.content-negotiation/encoding-qvalue))
           (sequence
            (assign-encoding-quality
             (reap/accept-encoding
@@ -305,6 +308,12 @@
           (reap/content-language "ar-eg")
           :juxt.http/content "ألسّلام عليكم"}
 
+         ;; Content that requires the reader to understand both English and Arabic
+         {:id :ar-eg-and-en
+          :juxt.http/content-language
+          (reap/content-language "ar-eg,en")
+          :juxt.http/content "Hello: ألسّلام عليكم"}
+
          ;; TODO: Test for when no content-language is specified - what should
          ;; we default to?
          ]]
@@ -313,15 +322,52 @@
         (=
          expected
          (map
-          (juxt :id :juxt.http.content-negotiation/language-qvalue)
+          (juxt :id (comp round :juxt.http.content-negotiation/language-qvalue))
           (sequence
            (assign-language-quality
             (reap/accept-language accept-language-header))
            variants)))
 
-        "en" [[:en 1.0][:en-us 1.0][:ar-eg 0.0]]
-        "en-us" [[:en 0.0][:en-us 1.0][:ar-eg 0.0]]
-        "ar-eg" [[:en 0.0][:en-us 0.0][:ar-eg 1.0]]
-        "en-us,en;q=0.8,ar-eg;q=0.2" [[:en 0.8][:en-us 1.0][:ar-eg 0.2]]
-        "*" [[:en 1.0][:en-us 1.0][:ar-eg 1.0]]
-        "en-us,*;q=0.1" [[:en 0.1][:en-us 1.0][:ar-eg 0.1]])))
+      "en"
+      [[:en 1.0]
+       [:en-us 1.0]
+       [:ar-eg 0.0]
+       [:ar-eg-and-en 0.0]]
+
+      "en-us"
+      [[:en 0.0]
+       [:en-us 1.0]
+       [:ar-eg 0.0]
+       [:ar-eg-and-en 0.0]]
+
+      "ar-eg"
+      [[:en 0.0]
+       [:en-us 0.0]
+       [:ar-eg 1.0]
+       [:ar-eg-and-en 0.0]]
+
+      "ar"
+      [[:en 0.0]
+       [:en-us 0.0]
+       [:ar-eg 1.0]
+       [:ar-eg-and-en 0.0]]
+
+      "en-us,en;q=0.8,ar;q=0.2"
+      [[:en 0.8]
+       [:en-us 1.0]
+       [:ar-eg 0.2]
+       ;; Both en and ar-eg languages understood, the quality value is the
+       ;; result of muliplying qvalues for en (0.8) an ar (0.2)
+       [:ar-eg-and-en 0.16]]
+
+      "*"
+      [[:en 1.0]
+       [:en-us 1.0]
+       [:ar-eg 1.0]
+       [:ar-eg-and-en 1.0]]
+
+      "en-us,*;q=0.1"
+      [[:en 0.1]
+       [:en-us 1.0]
+       [:ar-eg 0.1]
+       [:ar-eg-and-en 0.01]])))

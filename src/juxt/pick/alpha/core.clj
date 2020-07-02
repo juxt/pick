@@ -341,22 +341,15 @@
    (fn [variant]
      (let [qvalue
            (when-let [content-language (:juxt.http/content-language variant)]
-             ;; TODO: Ahead of time
              (if parsed-accept-language-header
-               (:qvalue
-                (acceptable-language-rating
-                 parsed-accept-language-header
-                 ;; Content languages can be lists of language tags for the
-                 ;; 'intended audience'. But for the purposes of language
-                 ;; negotiation, we pick the FIRST content-language in the
-                 ;; list. The matching of multiple languages with a language tag
-                 ;; is not defined by any RFC (as far as I can tell).
-                 ;;
-                 ;; TODO: We should now use the accept-encoding method of
-                 ;; arriving at the combined quality factor via multiplication.
-                 (first content-language)))
-               ;; TODO: But note, this should be the qsf to allow server
-               ;; preference.
+               (double
+                (apply
+                 *
+                 (for [lang content-language]
+                   (:qvalue
+                    (acceptable-language-rating
+                     parsed-accept-language-header
+                     lang)))))
                1.0))]
        (cond-> variant
          qvalue (conj [:juxt.http.content-negotiation/language-qvalue qvalue]))))))

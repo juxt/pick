@@ -130,7 +130,7 @@
 
          {:id :ar-eg
           :juxt.http/content-language
-          (reap/content-language "ar-eg,en")
+          (reap/content-language "ar-eg")
           :juxt.http/content "ألسّلام عليكم"
           :juxt.http/language-quality-factor 0.5}
 
