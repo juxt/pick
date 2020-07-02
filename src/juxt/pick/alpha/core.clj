@@ -354,6 +354,58 @@
        (cond-> variant
          qvalue (conj [:juxt.http.content-negotiation/language-qvalue qvalue]))))))
 
+(defn rate-variants [request-headers variants]
+  (sequence
+
+   ;; Ordering of dimensions is as per description here:
+   ;; http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
+
+   (comp
+
+    (assign-content-type-quality
+     (get request-headers "accept"))
+
+    (assign-language-quality
+     (get request-headers "accept-language"))
+
+    (assign-encoding-quality
+     (get request-headers "accept-encoding"))
+
+    (assign-charset-quality
+     (get request-headers "accept-charset")))
+
+   variants))
+
+(defn segment-by
+  "Return a map containing a :variants entry containing a collection of variants
+  which match the highest score, and :rejects containing a collection of
+  variants with a lower score. The score is determined by the scorer function
+  which is called with the variant as a single argument.
+
+  This function is commonly used when negotiating representations based on
+  process-of-elimination techniques."
+  [variants scorer comparator]
+  (reduce
+   (fn [acc variant]
+     (let [score (or (scorer variant) 0)
+           max-score-so-far (get acc :max-score-so-far 0)
+           variant (assoc variant :score score)]
+       (cond
+         (comparator score max-score-so-far)
+         (-> acc
+             (assoc
+              :variants [variant]
+              :max-score-so-far score)
+             (update :rejects into (:variants acc)))
+
+         (= score max-score-so-far)
+         (update acc :variants conj variant)
+
+         :else
+         (update acc :rejects conj variant))))
+   {:variants [] :rejects []}
+   variants))
+
 (defprotocol VariantSelector
   :extend-via-metadata true
   (select-variant [_ opts]))

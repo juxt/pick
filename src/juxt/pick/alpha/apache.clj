@@ -3,11 +3,7 @@
 (ns juxt.pick.alpha.apache
   (:require
    [juxt.pick.alpha.core
-    :refer [assign-content-type-quality
-            assign-charset-quality
-            assign-encoding-quality
-            assign-language-quality
-            select-variant]]))
+    :refer [rate-variants segment-by select-variant]]))
 
 ;; Apache httpd Negotiation Algorithm -- http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
 
@@ -33,66 +29,6 @@
 ;;         Select the first variant of those remaining. This will be either the first listed in the type-map file, or when variants are read from the directory, the one whose file name comes first when sorted using ASCII code order.
 ;;     The algorithm has now selected one 'best' variant, so return it as the response. The HTTP response header Vary is set to indicate the dimensions of negotiation (browsers and caches can use this information when caching the resource). End.
 ;;     To get here means no variant was selected (because none are acceptable to the browser). Return a 406 status (meaning "No acceptable representation") with a response body consisting of an HTML document listing the available variants. Also set the HTTP Vary header to indicate the dimensions of variance.
-
-(defn rate-variants [request-headers variants]
-  (sequence
-
-   ;; Ordering of dimensions is as per description here:
-   ;; http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
-
-   (comp
-
-    (assign-content-type-quality
-     (get request-headers "accept"))
-
-    (assign-language-quality
-     (get request-headers "accept-language"))
-
-    (assign-encoding-quality
-     (get request-headers "accept-encoding"))
-
-    (assign-charset-quality
-     (get request-headers "accept-charset")))
-
-   ;; TODO: Repeat for other dimensions. Short circuit, so if 0 variants left,
-   ;; don't keep parsing headers! But with one left, keep parsing because maybe
-   ;; that will be eliminated too! Keep in mind that 406 is discouraged for
-   ;; unacceptable languages: "or honor the header field by sending a 406 (Not
-   ;; Acceptable) response.  However, the latter is not encouraged, as doing so
-   ;; can prevent users from accessing content that they might be able to use
-   ;; (with translation software, for example). -- RFC 7231 Section 5.3.5"
-
-   variants))
-
-(defn- segment-by
-  "Return a map containing a :variants entry containing a collection of variants
-  which match the highest score, and :rejects containing a collection of
-  variants with a lower score. The score is determined by the scorer function
-  which is called with the variant as a single argument.
-
-  This function is commonly used when negotiating representations based on
-  process-of-elimination techniques."
-  [variants scorer comparator]
-  (reduce
-   (fn [acc variant]
-     (let [score (or (scorer variant) 0)
-           max-score-so-far (get acc :max-score-so-far 0)
-           variant (assoc variant :score score)]
-       (cond
-         (comparator score max-score-so-far)
-         (-> acc
-             (assoc
-              :variants [variant]
-              :max-score-so-far score)
-             (update :rejects into (:variants acc)))
-
-         (= score max-score-so-far)
-         (update acc :variants conj variant)
-
-         :else
-         (update acc :rejects conj variant))))
-   {:variants [] :rejects []}
-   variants))
 
 (defn apache-select-variant
   "Implementation of the Apache httpd content-negotiation algorithm detailed at
