@@ -149,7 +149,7 @@
          expected
          (map
           (juxt :id (comp round :juxt.http.content-negotiation/encoding-qvalue))
-          (sequence
+          (map
            (assign-encoding-quality
             (reap/accept-encoding
              accept-encoding-header))
@@ -323,7 +323,7 @@
          expected
          (map
           (juxt :id (comp round :juxt.http.content-negotiation/language-qvalue))
-          (sequence
+          (map
            (assign-language-quality
             (reap/accept-language accept-language-header))
            variants)))

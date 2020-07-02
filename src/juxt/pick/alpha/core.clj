@@ -101,26 +101,25 @@
    parsed-accept-header))
 
 (defn assign-content-type-quality
-  "Return a transducer that will assign a content-type quality to each variant in
-  a sequence according to the given (parsed) accept header. '
+  "Return a function that will assign a content-type quality to a variant
+  according to the given (parsed) accept header. '
 
   'A request without any Accept header field implies that the user agent will
   accept any media type in response' -- RFC 7231 Section 5.3.2"
   [parsed-accept-header]
-  (map
-   (fn [variant]
-     (assert variant)
-     (let [content-type (:juxt.http/content-type variant)]
-       (cond-> variant
-         content-type
-         (assoc
-          :juxt.http.content-negotiation/content-type-qvalue
-          (if parsed-accept-header
-            (:qvalue
-             (acceptable-content-type-rating
-              parsed-accept-header
-              content-type))
-            1.0)))))))
+  (fn [variant]
+    (assert variant)
+    (let [content-type (:juxt.http/content-type variant)]
+      (cond-> variant
+        content-type
+        (assoc
+         :juxt.http.content-negotiation/content-type-qvalue
+         (if parsed-accept-header
+           (:qvalue
+            (acceptable-content-type-rating
+             parsed-accept-header
+             content-type))
+           1.0))))))
 
 ;; Charsets
 
@@ -148,28 +147,25 @@
      parsed-accept-charset-header)))
 
 (defn assign-charset-quality
-  "Return a transducer that will assign a charset quality to each variant in a
-  sequence according to the given parsed accept-charset header. This argument
-  can be nil, meaning that no accept-charset was received.
+  "Return a function that will assign a charset quality to a variant according to
+  the given parsed accept-charset header. This argument can be nil, meaning that
+  no accept-charset was received.
 
   'A request without any Accept-Charset header field implies that the user agent
-  will accept any charset in response.' -- RFC 7231 Section 5.3.3
-
-  "
+  will accept any charset in response.' -- RFC 7231 Section 5.3.3"
   [parsed-accept-charset-header]
-  (map
-   (fn [variant]
-     (let [qvalue
-           (when-let [content-type (:juxt.http/content-type variant)]
-             ;; TODO: This condition can be checked ahead-of-time
-             (if parsed-accept-charset-header
-               (:qvalue
-                (acceptable-charset-rating
-                 parsed-accept-charset-header
-                 content-type))
-               1.0))]
-       (cond-> variant
-         qvalue (conj [:juxt.http.content-negotiation/charset-qvalue qvalue]))))))
+  (fn [variant]
+    (let [qvalue
+          (when-let [content-type (:juxt.http/content-type variant)]
+            ;; TODO: This condition can be checked ahead-of-time
+            (if parsed-accept-charset-header
+              (:qvalue
+               (acceptable-charset-rating
+                parsed-accept-charset-header
+                content-type))
+              1.0))]
+      (cond-> variant
+        qvalue (conj [:juxt.http.content-negotiation/charset-qvalue qvalue])))))
 
 ;; Encodings
 
@@ -233,10 +229,9 @@
        (select-best-encoding-match parsed-accept-encoding-header entry))))))
 
 (defn assign-encoding-quality
-  "Returns a transducer that will apply a rating on each of a collection of
-  variants, according to the given parsed Accept-Encoding header. This argument
-  can be nil, which is interpretted to mean that no Accept-Encoding header is
-  present.
+  "Returns a function that will assoc a rating on a variant, according to the
+  given parsed Accept-Encoding header. This argument can be nil, which is
+  interpreted to mean that no Accept-Encoding header is present.
 
  'A request without an Accept-Encoding header field implies that the user agent
   has no preferences regarding content-codings.  Although this allows the server
@@ -244,25 +239,24 @@
   will be able to correctly process all encodings.'  -- RFC 7231 Section 5.3.4
   "
   [parsed-accept-encoding-header]
-  (map
-   (fn [variant]
-     (let [qvalue
-           ;; TODO: This condition can be checked ahead-of-time
-           (if parsed-accept-encoding-header
-             (acceptable-encoding-qvalue
-              parsed-accept-encoding-header
-              (get
-               variant
-               :juxt.http/content-encoding
-               ;; default it no content-encoding found on variant
-               {:juxt.http/content-coding "identity"}))
+  (fn [variant]
+    (let [qvalue
+          ;; TODO: This condition can be checked ahead-of-time
+          (if parsed-accept-encoding-header
+            (acceptable-encoding-qvalue
+             parsed-accept-encoding-header
+             (get
+              variant
+              :juxt.http/content-encoding
+              ;; default it no content-encoding found on variant
+              {:juxt.http/content-coding "identity"}))
 
-             ;; "If no Accept-Encoding field is in the request, any
-             ;; content-coding is considered acceptable by the user agent."
-             ;; -- RFC 7231 Section 5.3.4
-             1.0)]
-       (cond-> variant
-         qvalue (conj [:juxt.http.content-negotiation/encoding-qvalue qvalue]))))))
+            ;; "If no Accept-Encoding field is in the request, any
+            ;; content-coding is considered acceptable by the user agent."
+            ;; -- RFC 7231 Section 5.3.4
+            1.0)]
+      (cond-> variant
+        qvalue (conj [:juxt.http.content-negotiation/encoding-qvalue qvalue])))))
 
 ;; Languages
 
@@ -330,32 +324,31 @@
    parsed-accept-language-header))
 
 (defn assign-language-quality
-  "Return a transducer that will assign a language quality to each variant in a
-  sequence according to the given parsed accept-language header. This argument
-  can be nil, meaning that no accept-language header was received.
+  "Return a function that will assign a language quality to a variant according to
+  the given parsed accept-language header. This argument can be nil, meaning
+  that no accept-language header was received.
 
   'A request without any Accept-Language header field implies that the user
   agent will accept any language in response.' -- RFC 7231 Section 5.3.5"
   [parsed-accept-language-header]
-  (map
-   (fn [variant]
-     (let [qvalue
-           (when-let [content-language (:juxt.http/content-language variant)]
-             (if parsed-accept-language-header
-               (double
-                (apply
-                 *
-                 (for [lang content-language]
-                   (:qvalue
-                    (acceptable-language-rating
-                     parsed-accept-language-header
-                     lang)))))
-               1.0))]
-       (cond-> variant
-         qvalue (conj [:juxt.http.content-negotiation/language-qvalue qvalue]))))))
+  (fn [variant]
+    (let [qvalue
+          (when-let [content-language (:juxt.http/content-language variant)]
+            (if parsed-accept-language-header
+              (double
+               (apply
+                *
+                (for [lang content-language]
+                  (:qvalue
+                   (acceptable-language-rating
+                    parsed-accept-language-header
+                    lang)))))
+              1.0))]
+      (cond-> variant
+        qvalue (conj [:juxt.http.content-negotiation/language-qvalue qvalue])))))
 
 (defn rate-variants [request-headers variants]
-  (sequence
+  (map
 
    ;; Ordering of dimensions is as per description here:
    ;; http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
