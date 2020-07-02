@@ -1,6 +1,6 @@
 = pick
 
-Full-featured server-driven content negotiation for HTTP, in Clojure.
+A Clojure library for HTTP server-driven content negotiation.
 
 [WARNING]
 --
