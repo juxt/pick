@@ -277,36 +277,45 @@
 ;;     The algorithm has now selected one 'best' variant, so return it as the response. The HTTP response header Vary is set to indicate the dimensions of negotiation (browsers and caches can use this information when caching the resource). End.
 ;;     To get here means no variant was selected (because none are acceptable to the browser). Return a 406 status (meaning "No acceptable representation") with a response body consisting of an HTML document listing the available variants. Also set the HTTP Vary header to indicate the dimensions of variance.
 
-;; TODO: Support nil arg, meaning, accept header not sent
-(defn assign-content-type-quality [parsed-accept-fields]
-  (keep
+(defn assign-content-type-quality
+  "Return a transducer that will assign a content-type quality to each variant in
+  a sequence according to the given (parsed) accept header. '
+
+  'A request without any Accept header field implies that the user agent will
+  accept any media type in response' -- RFC 7231 Section 5.3.2"
+  [parsed-accept-header]
+  (map
    (fn [variant]
-     (let [qvalue
-           (when-let [content-type (:juxt.http/content-type variant)]
-             (:qvalue
-              (acceptable-content-type-rating
-               parsed-accept-fields
-               content-type)))]
+     (assert variant)
+     (let [content-type (:juxt.http/content-type variant)]
        (cond-> variant
-         qvalue (conj [:juxt.http.content-negotiation/content-type-qvalue qvalue]))))))
+         content-type
+         (assoc
+          :juxt.http.content-negotiation/content-type-qvalue
+          (if parsed-accept-header
+            (:qvalue
+             (acceptable-content-type-rating
+              parsed-accept-header
+              content-type))
+            1.0)))))))
 
 (defn assign-language-quality
   "Return a transducer that will assign a language quality to each variant in a
-  sequence according to the given parsed accept-language fields. This argument
+  sequence according to the given parsed accept-language header. This argument
   can be nil, meaning that no accept-language header was received.
 
   'A request without any Accept-Language header field implies that the user
-  agent will accept any language in response.' -- RFC 7231 Section 5.3.5
-  "
-  [parsed-accept-language-fields]
-  (keep
+  agent will accept any language in response.' -- RFC 7231 Section 5.3.5"
+  [parsed-accept-language-header]
+  (map
    (fn [variant]
      (let [qvalue
            (when-let [content-language (:juxt.http/content-language variant)]
-             (if parsed-accept-language-fields
+             ;; TODO: Ahead of time
+             (if parsed-accept-language-header
                (:qvalue
                 (acceptable-language-rating
-                 parsed-accept-language-fields
+                 parsed-accept-language-header
                  ;; Content languages can be lists of language tags for the
                  ;; 'intended audience'. But for the purposes of language
                  ;; negotiation, we pick the FIRST content-language in the
@@ -334,7 +343,7 @@
   will be able to correctly process all encodings.'  -- RFC 7231 Section 5.3.4
   "
   [parsed-accept-encoding-header]
-  (keep
+  (map
    (fn [variant]
      (let [qvalue
            ;; TODO: This condition can be checked ahead-of-time
@@ -364,7 +373,7 @@
 
   "
   [parsed-accept-charset-header]
-  (keep
+  (map
    (fn [variant]
      (let [qvalue
            (when-let [content-type (:juxt.http/content-type variant)]
@@ -387,20 +396,13 @@
    (comp
 
     (assign-content-type-quality
-     (get
-      request-headers "accept"
-      ;; "A request without any Accept header field implies that the user
-      ;; agent will accept any media type in response". (TODO: test for this)
-      ;; -- RFC 7231 Section 5.3.2
-      ))
+     (get request-headers "accept"))
 
     (assign-language-quality
      (get request-headers "accept-language"))
 
     (assign-encoding-quality
-     (get
-      request-headers "accept-encoding"
-      ))
+     (get request-headers "accept-encoding"))
 
     (assign-charset-quality
      (get request-headers "accept-charset")))
