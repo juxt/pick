@@ -79,7 +79,7 @@
 ;; TODO: Support nil arg
 (defn acceptable-content-type-rating
   "Determine the given content-type's rating (precedence, qvalue) with respect to
-  what is acceptable. The parsed-accept-fields parameter is a data structure
+  what is acceptable. The parsed-accept-header parameter is a data structure
   returned from parsing the Accept header with reap. The variant is a map
   corresponding to the resource of the variant.
 
@@ -92,13 +92,13 @@
   variant, if there are no more preferable variants and if returning one is
   preferable to returning a 406 status code."
 
-  [parsed-accept-fields parsed-content-type]
+  [parsed-accept-header parsed-content-type]
 
   (reduce
    select-better-content-type-match
    {:qvalue 0.0
     :content-type parsed-content-type}
-   parsed-accept-fields))
+   parsed-accept-header))
 
 (defn assign-content-type-quality
   "Return a transducer that will assign a content-type quality to each variant in
@@ -125,7 +125,7 @@
 ;; Charsets
 
 (defn acceptable-charset-rating
-  [parsed-accept-charset-fields parsed-content-type]
+  [parsed-accept-charset-header parsed-content-type]
   (when-let [charset (get-in parsed-content-type [:juxt.http/parameter-map "charset"])]
     (reduce
      (fn [best-match field]
@@ -145,11 +145,11 @@
          :else best-match))
      {:qvalue 0.0
       :precedence 0}
-     parsed-accept-charset-fields)))
+     parsed-accept-charset-header)))
 
 (defn assign-charset-quality
   "Return a transducer that will assign a charset quality to each variant in a
-  sequence according to the given parsed accept-charset fields. This argument
+  sequence according to the given parsed accept-charset header. This argument
   can be nil, meaning that no accept-charset was received.
 
   'A request without any Accept-Charset header field implies that the user agent
@@ -173,7 +173,7 @@
 
 ;; Encodings
 
-(defn select-best-encoding-match [accept-encoding-fields entry]
+(defn select-best-encoding-match [parsed-accept-encoding-header entry]
   (reduce
    (fn [best-match {accept-coding :juxt.http/codings :as field}]
 
@@ -206,11 +206,11 @@
               1.0
               0.0)}
 
-   accept-encoding-fields))
+   parsed-accept-encoding-header))
 
 (defn acceptable-encoding-qvalue
   "Determine the qvalue for the given parsed content-encoding according to the
-  given parsed Accept-Encoding header fields.
+  given parsed Accept-Encoding header.
 
   The content-encoding can be nil.
 
@@ -234,7 +234,7 @@
 
 (defn assign-encoding-quality
   "Returns a transducer that will apply a rating on each of a collection of
-  variants, according to the given parsed Accept-Encoding fields. This argument
+  variants, according to the given parsed Accept-Encoding header. This argument
   can be nil, which is interpretted to mean that no Accept-Encoding header is
   present.
 
@@ -305,7 +305,7 @@
 
 (defn acceptable-language-rating
   "Determine the given language's rating (precedence, qvalue) with respect to what
-  is acceptable. The parsed-accept-language-fields parameter is a data structure
+  is acceptable. The parsed-accept-language-header parameter is a data structure
   returned from parsing the Accept-Language header with reap.
 
   This function determines the qvalue according to rules of precedence in RFC
@@ -321,13 +321,13 @@
   ;; TODO: Improve this function by allowing multiple language tags and using
   ;; multiplication.
 
-  [parsed-accept-language-fields parsed-language-tag]
+  [parsed-accept-language-header parsed-language-tag]
 
   (reduce
    select-better-language-match
    {:qvalue 0.0
     :language-tag parsed-language-tag}
-   parsed-accept-language-fields))
+   parsed-accept-language-header))
 
 (defn assign-language-quality
   "Return a transducer that will assign a language quality to each variant in a
