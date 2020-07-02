@@ -47,7 +47,7 @@ You can use *pick* to select the variant that is most acceptable to the user age
 (require '[juxt.pick.apache :refer [select-variant]])
 
 (select-variant
- {:juxt.http/request-headers {…} ; Parsed request headers
+ {:juxt.http/request-headers {…} ; Parseding request headers
   :juxt.http/variants […] ; Collection of maps, each representing a possible variant
   :juxt.http/explain? false})
 =>
@@ -80,7 +80,7 @@ both innovation and solid dependability.
 
 However, while content negotiation is often used for static resources, and is
 well implemented by web servers such as Apache's httpd and nginx, it is often
-missing from , or poorly implemented by, the majority of web libraries and
+missing from, or poorly implemented by, the majority of web libraries and
 frameworks.
 
 === Alternatives
