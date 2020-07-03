@@ -52,7 +52,7 @@ negotiable dimensions and corresponding rules specified in RFC 7231. These can
 be used by content negotiation algorithms to determine the most appropriate
 content to respond with.
 
-*pick* _also_ includes a built-in reference implementation based on Apache's _de-facto_ http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm[content negotiation algorithm].
+*pick* _also_ includes a built-in reference implementation based on Apache's _de-facto_ https://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm[content negotiation algorithm].
 
 === Problem Statement
 
