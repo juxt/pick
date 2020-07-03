@@ -94,15 +94,11 @@
                 (segment-by :juxt.http/content-length <)
                 (assoc :phase "select smallest content length")))
 
-          ;; Select the first variant of those remaining
-          (fn [variants]
-            {:phase "select first variant"
-             :variants [(first variants)]
-             :rejects (next variants)})])]
+          ])]
 
     (cond->
-        {:juxt.http/variant (first (:variants explain))
-         :juxt.http/vary
+        {:juxt.http/variants (:variants explain)
+         :juxt.http/varying
          (cond-> []
            (> (count (distinct (keep :juxt.http/content-type variants))) 1)
            (conj {:juxt.http/field-name "accept"})

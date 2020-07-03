@@ -19,8 +19,10 @@ A variant is represented by data, for example:
   {:juxt.http/type "text"
    :juxt.http/subtype "html"
    :juxt.http/parameter-map {"charset" "utf-8"}}
- :juxt.http/content-encoding "gzip,deflate"
- :juxt.http/content-language "en-US"}
+ :juxt.http/content-encoding
+   [{:juxt.http/content-coding "gzip"}]
+ :juxt.http/content-language
+   {:juxt.http/langtag "en-US"}}
 ----
 
 You can use *pick* to select the variant that is most acceptable to the user agent. Here's how:
@@ -36,7 +38,7 @@ You can use *pick* to select the variant that is most acceptable to the user age
   {:juxt.http/request-headers {…}
    :juxt.http/variants […]})
 =>
-{:juxt.http/variant {…}; variant chosen
+{:juxt.http/variants [{…}]; most acceptable variant(s)
  :juxt.http/vary […] ; request headers used in the determination
 }
 
@@ -89,7 +91,7 @@ request/response bodies
 
 [CAUTION]
 --
-*pick* only provides the decision of which variant to select,
+*pick* only provides the decision of which variant(s) to select,
 given the context of an HTTP request and a set of variants to choose between.
 
 It does *not* include support for format transformation or coercion, which is
@@ -107,7 +109,17 @@ NOTE: TBD
 
 === Variants
 
-NOTE: TBD
+[source,clojure]
+----
+{:juxt.http/content-type
+  {:juxt.http/type "text"
+   :juxt.http/subtype "html"
+   :juxt.http/parameter-map {"charset" "utf-8"}}
+ :juxt.http/content-encoding
+   [{:juxt.http/content-coding "gzip"}]
+ :juxt.http/content-language
+   {:juxt.http/langtag "en-US"}}
+----
 
 === Selecting a variant
 
@@ -148,8 +160,22 @@ NOTE: TBD
 
 NOTE: TBD
 
+=== A footnote on the `juxt.http` keyword namespace
+
+The `juxt.http` namespace is used because it is managed by JUXT, to ensure
+keywords in the `juxt.http` namespace are used consistently between libraries,
+maintaining a 'registry' of these keywords, specifying the allowed data types,
+publishing Clojure specs for import and so on. It is expected that users will
+either be happy to use these namespaced keywords in their own programs or write
+transformers to adapt their own data for use by pick.
+
+It is recommended to retain the `juxt.http` namespace because of the benefit of
+using other current and future JUXT libraries that integrate with *pick*.
+
 == References
 
 https://tools.ietf.org/html/rfc7231[RFC 7231] is the normative standard on content negotiation.
 
 This https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation[MDN guide on content negotiation from Mozilla] is very informative.
+
+https://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm

@@ -43,7 +43,7 @@
               :juxt.http/quality-of-source 0.8}
 
              ]})
-          (get-in [:juxt.http/variant :id])))
+          (get-in [:juxt.http/variants 0 :id])))
 
       "text/html" :html
       "TEXT/HTML" :html
@@ -75,7 +75,7 @@
               (reap/accept-encoding
                accept-encoding-header)}
              :juxt.http/variants variants})
-           (get-in [:juxt.http/variant :id])))
+           (get-in [:juxt.http/variants 0 :id])))
 
       "gzip"
       [{:id :gzip
@@ -166,7 +166,7 @@
              {:juxt.http/request-headers
               {"accept-language" (reap/accept-language accept-language-header)}
               :juxt.http/variants variants})
-            (get-in [:juxt.http/variant :juxt.http/content])))
+            (get-in [:juxt.http/variants 0 :juxt.http/content])))
         "en" "Hello!"
         "en-us" "Howdy!"
         "ar-eg" "ألسّلام عليكم"
@@ -187,7 +187,7 @@
                 apache
                 {:juxt.http/request-headers {}
                  :juxt.http/variants variants})
-               (get-in [:juxt.http/variant :juxt.http/content]))))))
+               (get-in [:juxt.http/variants 0 :juxt.http/content]))))))
 
 (deftest integrated-test
   (is
