@@ -138,7 +138,7 @@
           :juxt.http/content "Hello!"
           :juxt.http/content-language
           (reap/content-language "en")
-          :juxt.http/language-quality-factor 0.5}
+          }
 
          {:id :en-us
           :juxt.http/content-language
@@ -146,13 +146,13 @@
           ;; https://en.wikipedia.org/wiki/Howdy
           ;; Not everyone in the US uses 'Howdy!' but this is just a test...
           :juxt.http/content "Howdy!"
-          :juxt.http/language-quality-factor 0.5}
+          }
 
          {:id :ar-eg
           :juxt.http/content-language
           (reap/content-language "ar-eg")
           :juxt.http/content "ألسّلام عليكم"
-          :juxt.http/language-quality-factor 0.5}
+          }
 
          ;; TODO: Test for when no content-language is specified - what should
          ;; we default to?
@@ -187,30 +187,7 @@
                 apache
                 {:juxt.http/request-headers {}
                  :juxt.http/variants variants})
-               (get-in [:juxt.http/variant :juxt.http/content]))))
-
-    ;; The language quality factor of a variant, if present, is used in
-    ;; preference to an Accept-Language header.
-    (is
-     (=
-      "Bonjour!"
-      (-> (select-variant
-           apache
-           {:juxt.http/request-headers
-            {"accept-language" (reap/accept-language "en")}
-            :juxt.http/variants
-            (->
-             (map
-              (fn [v]
-                (assoc v :juxt.http.content-negotiation.apache/language-quality-factor 0.5))
-              variants)
-             (conj
-              {:id :fr-fr
-               :juxt.http/content "Bonjour!"
-               :juxt.http/content-language (reap/content-language "fr-FR")
-               :juxt.http.content-negotiation.apache/language-quality-factor 1.0}))})
-          (get-in [:juxt.http/variant :juxt.http/content]))))))
-
+               (get-in [:juxt.http/variant :juxt.http/content]))))))
 
 (deftest integrated-test
   (is

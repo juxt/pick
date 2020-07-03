@@ -71,13 +71,6 @@
 
           (fn [variants]
             (let [result
-                  (segment-by
-                   variants
-                   #(get % :juxt.http.content-negotiation.apache/language-quality-factor 1.0) >)]
-              (assoc result :phase "select highest language quality factor")))
-
-          (fn [variants]
-            (let [result
                   (segment-by variants :juxt.http.content-negotiation/language-qvalue >)]
               (assoc result :phase "select best language match")))
 
