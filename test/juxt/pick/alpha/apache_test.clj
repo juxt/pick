@@ -154,8 +154,6 @@
           :juxt.http/content "ألسّلام عليكم"
           }
 
-         ;; TODO: Test for when no content-language is specified - what should
-         ;; we default to?
          ]]
 
     (are [accept-language-header expected-greeting]
@@ -177,6 +175,10 @@
         ;; qvalue than another more specific language, it is still
         ;; selected. Hence, en and ar-eg are preferred over en-us, and en is
         ;; selected because it comes before ar-eg.
+        ;;
+        ;; But, see RFC2616 Section 14.4.: 'The special range "*", if present in
+        ;; the Accept-Language field, matches every tag not matched by any other
+        ;; range present in the Accept-Language field.'
         "en-us;q=0.8,*" "Hello!"
 
         nil "Hello!")
