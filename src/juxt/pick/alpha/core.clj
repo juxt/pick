@@ -57,20 +57,20 @@
 (defn- select-better-content-type-match
   "Designed to be used as a reducing function, if the parsed-accept-field is a
   higher precedence (or same precedence with higher qvalue), return an updated
-  best-match map."
+  accumulator."
 
-  [best-match parsed-accept-field]
+  [acc parsed-accept-field]
 
-  (let [precedence (content-type-match? parsed-accept-field (:content-type best-match))
+  (let [precedence (content-type-match? parsed-accept-field (:content-type acc))
         qvalue (get parsed-accept-field :juxt.http/qvalue 1.0)]
 
-    (cond-> best-match
+    (cond-> acc
       (and
        precedence
        (or
-        (> precedence (get best-match :precedence 0))
-        (and (= precedence (get best-match :precedence 0))
-             (> qvalue (get best-match :qvalue 0.0)))))
+        (> precedence (get acc :precedence 0))
+        (and (= precedence (get acc :precedence 0))
+             (> qvalue (get acc :qvalue 0.0)))))
       (conj
        [:qvalue qvalue]
        [:precedence precedence]
@@ -127,21 +127,21 @@
   [parsed-accept-charset-header charset]
   (if (seq parsed-accept-charset-header)
     (reduce
-     (fn [best-match field]
+     (fn [acc field]
        (cond
          (= charset (:juxt.http/charset field))
-         (cond-> best-match
-           (< (get best-match :precedence) 2)
+         (cond-> acc
+           (< (get acc :precedence) 2)
            (conj [:qvalue (get field :juxt.http/qvalue 1.0)]
                  [:precedence 2]
                  [:apex.debug/parsed-accept-charset-field field]))
          (= "*" (:juxt.http/charset field))
-         (cond-> best-match
-           (= (get best-match :precedence) 0)
+         (cond-> acc
+           (= (get acc :precedence) 0)
            (conj [:qvalue (get field :juxt.http/qvalue 1.0)]
                  [:precedence 1]
                  [:apex.debug/parsed-accept-charset-field field]))
-         :else best-match))
+         :else acc))
      {:qvalue 0.0
       :precedence 0}
      parsed-accept-charset-header)
@@ -172,24 +172,24 @@
 
 (defn select-best-encoding-match [parsed-accept-encoding-header entry]
   (reduce
-   (fn [best-match {accept-coding :juxt.http/codings :as field}]
+   (fn [acc {accept-coding :juxt.http/codings :as field}]
 
      (cond
        (= accept-coding (get entry :juxt.http/content-coding "identity"))
-       (cond-> best-match
-         (< (get best-match :precedence) 2)
+       (cond-> acc
+         (< (get acc :precedence) 2)
          (conj [:qvalue (get field :juxt.http/qvalue 1.0)]
                [:precedence 2]
                [:apex.debug/parsed-accept-encoding-field field]))
 
        (= accept-coding "*")
-       (cond-> best-match
-         (= (get best-match :precedence) 0)
+       (cond-> acc
+         (= (get acc :precedence) 0)
          (conj [:qvalue (get field :juxt.http/qvalue 1.0)]
                [:precedence 1]
                [:apex.debug/parsed-accept-encoding-field field]))
 
-       :else best-match))
+       :else acc))
 
    {:precedence 0
     :qvalue (if
@@ -282,14 +282,14 @@
    (.equals language-range "*")))
 
 (defn- select-better-language-match
-  [best-match parsed-accept-language-field]
+  [acc parsed-accept-language-field]
   (let [qvalue (get parsed-accept-language-field :juxt.http/qvalue 1.0)]
-    (cond-> best-match
+    (cond-> acc
       (and
-       (> qvalue (get best-match :qvalue 0.0))
+       (> qvalue (get acc :qvalue 0.0))
        (basic-language-match?
         (:juxt.http/language-range parsed-accept-language-field)
-        (get-in best-match [:language-tag :juxt.http/langtag])))
+        (get-in acc [:language-tag :juxt.http/langtag])))
       (conj
        [:qvalue qvalue]
        [:apex.debug/parsed-accept-language-field parsed-accept-language-field]))))
