@@ -30,10 +30,10 @@ You can use *pick* to select the variant that is most acceptable to the user age
 [source,clojure]
 ----
 (require
-  '[juxt.pick.alpha.core :refer [select-variant]]
+  '[juxt.pick.alpha.core :refer [pick]]
   '[juxt.pick.alpha.apache :refer [apache]])
 
-(select-variant
+(pick
   apache
   {:juxt.http/request-headers {…}
    :juxt.http/variants […]})
@@ -123,7 +123,7 @@ NOTE: TBD
 
 === Selecting a variant
 
-Use the `juxt.pick.alpha.core/select-variant` function, with the algorithm as
+Use the `juxt.pick.alpha.core/pick` function, with the algorithm as
 the first argument.
 
 [TIP]

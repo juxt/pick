@@ -3,7 +3,7 @@
 (ns juxt.pick.alpha.apache
   (:require
    [juxt.pick.alpha.core
-    :refer [rate-variants segment-by select-variant]]))
+    :refer [rate-variants segment-by pick]]))
 
 ;; Apache httpd Negotiation Algorithm -- http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
 
@@ -115,4 +115,4 @@
   (with-meta
     {:description "Implementation of Apache's content negotiation algorithm"
      :url "http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm"}
-    {`select-variant (fn [_ opts] (apache-select-variant opts))}))
+    {`pick (fn [_ opts] (apache-select-variant opts))}))

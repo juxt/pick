@@ -402,4 +402,4 @@
 
 (defprotocol VariantSelector
   :extend-via-metadata true
-  (select-variant [_ opts]))
+  (pick [_ opts]))

@@ -3,7 +3,7 @@
 (ns juxt.pick.alpha.apache-test
   (:require
    [clojure.test :refer [deftest is are testing]]
-   [juxt.pick.alpha.core :refer [select-variant]]
+   [juxt.pick.alpha.core :refer [pick]]
    [juxt.pick.alpha.apache :refer [apache]]
    [juxt.reap.alpha.decoders :as reap]))
 
@@ -12,7 +12,7 @@
   (are [accept-header expected-content]
       (= expected-content
          (->
-          (select-variant
+          (pick
            apache
            {:juxt.http/request-headers
             {"accept" (reap/accept accept-header)}
@@ -68,7 +68,7 @@
   (are [accept-encoding-header variants expected-id]
       (=
        expected-id
-       (-> (select-variant
+       (-> (pick
             apache
             {:juxt.http/request-headers
              {"accept-encoding"
@@ -161,7 +161,7 @@
     (are [accept-language-header expected-greeting]
         (= expected-greeting
            (->
-            (select-variant
+            (pick
              apache
              {:juxt.http/request-headers
               {"accept-language" (reap/accept-language accept-language-header)}
@@ -183,7 +183,7 @@
 
     ;; If no Accept-Language header, just pick the first variant.
     (is (= "Hello!"
-           (-> (select-variant
+           (-> (pick
                 apache
                 {:juxt.http/request-headers {}
                  :juxt.http/variants variants})
@@ -191,7 +191,7 @@
 
 (deftest integrated-test
   (is
-   (select-variant
+   (pick
     apache
     {:juxt.http/request
      {"accept" (reap/accept "text/html")}
@@ -239,7 +239,7 @@
           (reap/content-language "en")}]
 
         select-explain
-        (select-variant
+        (pick
          apache
          {:juxt.http/request request
           :juxt.http/variants variants
@@ -252,7 +252,7 @@
       (is
        (nil?
         (find
-         (select-variant
+         (pick
           apache
           {:juxt.http/request request
            :juxt.http/variants variants
@@ -263,7 +263,7 @@
       (is
        (nil?
         (find
-         (select-variant
+         (pick
           apache
           {:juxt.http/request request
            :juxt.http/variants variants})
