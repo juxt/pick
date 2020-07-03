@@ -126,6 +126,23 @@ NOTE: TBD
 Use the `juxt.pick.alpha.core/pick` function, with the algorithm as
 the first argument.
 
+[source,clojure]
+----
+(require
+  '[juxt.pick.alpha.core :refer [pick]]
+  '[juxt.pick.alpha.apache :refer [using-apache-algo]])
+
+(pick
+  using-apache-algo
+  {:juxt.http/request-headers
+    {…}
+   :juxt.http/variants […]})
+=>
+{:juxt.http/variants [{…}]; most acceptable variant(s)
+ :juxt.http/vary […] ; request headers used in the determination
+}
+----
+
 [TIP]
 --
 If you prefer to specify these values as string literals, use our https://github.com/juxt/reap[reap] library.
