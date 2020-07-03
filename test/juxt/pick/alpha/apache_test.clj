@@ -30,7 +30,19 @@
              {:id :plain-text
               :juxt.http/content "Hello World!"
               :juxt.http/content-type
-              (reap/content-type "text/plain;charset=utf-8")}]})
+              (reap/content-type "text/plain;charset=utf-8")}
+
+             {:id :edn
+              :juxt.http/content-type
+              (reap/content-type "application/edn")
+              :juxt.http/quality-of-source 1.0}
+
+             {:id :json
+              :juxt.http/content-type
+              (reap/content-type "application/json")
+              :juxt.http/quality-of-source 0.8}
+
+             ]})
           (get-in [:juxt.http/variant :id])))
 
       "text/html" :html
@@ -40,9 +52,17 @@
       "text/plain" :plain-text
       "text/html;q=0.8,text/plain" :plain-text
 
-      "TEXT/HTML;level=2;text/html;q=0.8" :html-level-2))
+      "TEXT/HTML;level=2;text/html;q=0.8" :html-level-2
 
-;; TODO: Test quality-of-source
+      ;; Quality for source tests
+      "application/edn" :edn
+      "application/json" :json
+      "application/json,application/edn" :edn
+      ;; We still get EDN here because of the :juxt.http/quality-of-source
+      ;; mulitplier
+      "application/json,application/edn;q=0.9" :edn
+      "application/json,application/edn;q=0.1" :json
+      ))
 
 (deftest accept-encoding-test
   (are [accept-encoding-header variants expected-id]
