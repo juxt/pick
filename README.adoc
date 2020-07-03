@@ -31,10 +31,10 @@ You can use *pick* to select the variant that is most acceptable to the user age
 ----
 (require
   '[juxt.pick.alpha.core :refer [pick]]
-  '[juxt.pick.alpha.apache :refer [apache]])
+  '[juxt.pick.alpha.apache :refer [using-apache-algo]])
 
 (pick
-  apache
+  using-apache-algo
   {:juxt.http/request-headers {…}
    :juxt.http/variants […]})
 =>

@@ -111,7 +111,7 @@
         explain? (assoc :juxt.http/explain explain))))
 
 ;; Extend the juxt.pick.alpha.core.VariantSelector via metadata
-(def apache
+(def using-apache-algo
   (with-meta
     {:description "Implementation of Apache's content negotiation algorithm"
      :url "http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm"}
