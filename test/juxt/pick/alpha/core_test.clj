@@ -4,8 +4,8 @@
   (:require
    [clojure.test :refer [deftest is are]]
    [juxt.pick.alpha.core
-    :refer [match-parameters? acceptable-content-type-rating
-            acceptable-charset-rating
+    :refer [match-parameters? acceptable-content-type-quality
+            acceptable-charset-quality
             assign-language-quality basic-language-match?
             acceptable-encoding-qvalue assign-encoding-quality]]
    [juxt.reap.alpha.decoders :as reap]))
@@ -30,11 +30,11 @@
   (is (match-parameters? {"LEVEL" "1" "foo" "bar"} {"level" "1" "foo" "bar"}))
   (is (not (match-parameters? {"LEVEL" "1" "foo" "bar"} {"level" "1" "foo" "baz"}))))
 
-(deftest acceptable-content-type-rating-test
+(deftest acceptable-content-type-quality-test
   (are [content-type expected]
       (= expected
          (select-keys
-          (acceptable-content-type-rating
+          (acceptable-content-type-quality
            (reap/accept "text/html;q=0.1,text/html;level=2;q=0.4,text/html;LEVEL=3;q=0.5,text/*;q=0.02,*/*;q=0.01")
            (reap/content-type content-type))
           [:qvalue :precedence]))
@@ -63,7 +63,7 @@
     (are [content-type expected]
         (= expected
            (:qvalue
-            (acceptable-content-type-rating
+            (acceptable-content-type-quality
              accepts
              (reap/content-type content-type))))
 
@@ -75,11 +75,11 @@
         "text/html;level=3" 0.7)))
 ;; See RFC 7231 Section 5.3.3: Accept-Charset
 
-(deftest acceptable-charset-rating-test
+(deftest acceptable-charset-quality-test
   (are [accept-charset charset expected]
       (= expected
          (->
-          (acceptable-charset-rating
+          (acceptable-charset-quality
            (reap/accept-charset accept-charset)
            charset)
           (select-keys [:qvalue :precedence])))
@@ -316,7 +316,7 @@
           :juxt.http/content "Hello: ألسّلام عليكم"}
 
          ;; Unlike with encoding, if no content-language is specified we don't
-         ;; provide a rating. This leaves the decision up to the algorithm.
+         ;; provide a quality. This leaves the decision up to the algorithm.
          {:id :unspecified}]]
 
     (are [accept-language-header expected]

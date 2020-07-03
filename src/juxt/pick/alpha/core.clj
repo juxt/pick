@@ -76,8 +76,8 @@
        [:precedence precedence]
        [:apex.debug/parsed-accept-field parsed-accept-field]))))
 
-(defn acceptable-content-type-rating
-  "Determine the given content-type's rating (precedence, qvalue) with respect to
+(defn acceptable-content-type-quality
+  "Determine the given content-type's quality (precedence, qvalue) with respect to
   what is acceptable. The parsed-accept-header parameter is sequence returned
   from parsing the Accept header (with reap).
 
@@ -116,13 +116,13 @@
     (if-let [content-type (:juxt.http/content-type variant)]
       (assoc variant
              :juxt.http.content-negotiation/content-type-qvalue
-             (:qvalue (acceptable-content-type-rating parsed-accept-header content-type)))
+             (:qvalue (acceptable-content-type-quality parsed-accept-header content-type)))
       ;; No content-type on variant, return variant untouched.
       variant)))
 
 ;; Charsets
 
-(defn acceptable-charset-rating
+(defn acceptable-charset-quality
   "(charset cannot be nil)"
   [parsed-accept-charset-header charset]
   (if (seq parsed-accept-charset-header)
@@ -162,7 +162,7 @@
        variant
        :juxt.http.content-negotiation/charset-qvalue
        (:qvalue
-        (acceptable-charset-rating
+        (acceptable-charset-quality
          parsed-accept-charset-header
          charset)))
       ;; No charset on variant, return variant untouched.
@@ -226,7 +226,7 @@
        (select-best-encoding-match parsed-accept-encoding-header entry))))))
 
 (defn assign-encoding-quality
-  "Returns a function that will assoc a rating on a variant, according to the
+  "Returns a function that will assoc a quality on a variant, according to the
   given parsed Accept-Encoding header. This argument can be nil, which is
   interpreted to mean that no Accept-Encoding header is present.
 
@@ -294,8 +294,8 @@
        [:qvalue qvalue]
        [:apex.debug/parsed-accept-language-field parsed-accept-language-field]))))
 
-(defn acceptable-language-rating
-  "Determine the given language's rating (precedence, qvalue) with respect to what
+(defn acceptable-language-quality
+  "Determine the given language's quality (precedence, qvalue) with respect to what
   is acceptable. The parsed-accept-language-header parameter is a data structure
   returned from parsing the Accept-Language header with reap. This argument can be nil, meaning
   that no accept-language header was received:
@@ -340,12 +340,12 @@
            *
            (for [lang content-language]
              (:qvalue
-              (acceptable-language-rating
+              (acceptable-language-quality
                parsed-accept-language-header
                lang)))))
          ;; No accept-language header, so language is acceptable.
          1.0))
-      ;; No content-language, so no rating applied.
+      ;; No content-language, so no quality applied.
       variant)))
 
 (defn rate-variants [request-headers variants]
