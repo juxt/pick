@@ -7,6 +7,7 @@
     :refer [match-parameters? acceptable-content-type-quality
             acceptable-charset-quality
             assign-language-quality basic-language-match?
+            assign-language-ordering
             acceptable-encoding-qvalue assign-encoding-quality]]
    [juxt.reap.alpha.decoders :as reap]))
 
@@ -330,52 +331,111 @@
            variants)))
 
       "en"
-      [[:en 1.0]
-       [:en-us 1.0]
-       [:ar-eg 0.0]
-       [:ar-eg-and-en 0.0]
-       [:unspecified nil]]
+        [[:en 1.0]
+         [:en-us 1.0]
+         [:ar-eg 0.0]
+         [:ar-eg-and-en 0.0]
+         [:unspecified nil]]
 
-      "en-us"
-      [[:en 0.0]
-       [:en-us 1.0]
-       [:ar-eg 0.0]
-       [:ar-eg-and-en 0.0]
-       [:unspecified nil]]
+        "en-us"
+        [[:en 0.0]
+         [:en-us 1.0]
+         [:ar-eg 0.0]
+         [:ar-eg-and-en 0.0]
+         [:unspecified nil]]
 
-      "ar-eg"
-      [[:en 0.0]
-       [:en-us 0.0]
-       [:ar-eg 1.0]
-       [:ar-eg-and-en 0.0]
-       [:unspecified nil]]
+        "ar-eg"
+        [[:en 0.0]
+         [:en-us 0.0]
+         [:ar-eg 1.0]
+         [:ar-eg-and-en 0.0]
+         [:unspecified nil]]
 
-      "ar"
-      [[:en 0.0]
-       [:en-us 0.0]
-       [:ar-eg 1.0]
-       [:ar-eg-and-en 0.0]
-       [:unspecified nil]]
+        "ar"
+        [[:en 0.0]
+         [:en-us 0.0]
+         [:ar-eg 1.0]
+         [:ar-eg-and-en 0.0]
+         [:unspecified nil]]
 
-      "en-us,en;q=0.8,ar;q=0.2"
-      [[:en 0.8]
-       [:en-us 1.0]
-       [:ar-eg 0.2]
-       ;; Both en and ar-eg languages understood, the quality value is the
-       ;; result of muliplying qvalues for en (0.8) an ar (0.2)
-       [:ar-eg-and-en 0.16]
-       [:unspecified nil]]
+        "en-us,en;q=0.8,ar;q=0.2"
+        [[:en 0.8]
+         [:en-us 1.0]
+         [:ar-eg 0.2]
+         ;; Both en and ar-eg languages understood, the quality value is the
+         ;; result of muliplying qvalues for en (0.8) an ar (0.2)
+         [:ar-eg-and-en 0.16]
+         [:unspecified nil]]
 
-      "*"
-      [[:en 1.0]
-       [:en-us 1.0]
-       [:ar-eg 1.0]
-       [:ar-eg-and-en 1.0]
-       [:unspecified nil]]
+        "*"
+        [[:en 1.0]
+         [:en-us 1.0]
+         [:ar-eg 1.0]
+         [:ar-eg-and-en 1.0]
+         [:unspecified nil]]
 
-      "en-us,*;q=0.1"
-      [[:en 0.1]
-       [:en-us 1.0]
-       [:ar-eg 0.1]
-       [:ar-eg-and-en 0.01]
-       [:unspecified nil]])))
+        "en-us,*;q=0.1"
+        [[:en 0.1]
+         [:en-us 1.0]
+         [:ar-eg 0.1]
+         [:ar-eg-and-en 0.01]
+         [:unspecified nil]])
+
+    (are [accept-language-header expected]
+        (=
+         expected
+         (map
+          (juxt :id :juxt.http.content-negotiation/language-ordering-weight)
+          (map
+           (assign-language-ordering
+            (reap/accept-language accept-language-header))
+           variants)))
+
+      "en"
+        [[:en 1]
+         [:en-us 1]
+         [:ar-eg 0]
+         [:ar-eg-and-en 1]
+         [:unspecified nil]]
+
+        "en-us"
+        [[:en 0]
+         [:en-us 1]
+         [:ar-eg 0]
+         [:ar-eg-and-en 0]
+         [:unspecified nil]]
+
+        "ar-eg"
+        [[:en 0]
+         [:en-us 0]
+         [:ar-eg 1]
+         [:ar-eg-and-en 1]
+         [:unspecified nil]]
+
+        "ar"
+        [[:en 0]
+         [:en-us 0]
+         [:ar-eg 1]
+         [:ar-eg-and-en 1]
+         [:unspecified nil]]
+
+        "en-us,en;q=0.8,ar;q=0.2"
+        [[:en 2]
+         [:en-us 6]
+         [:ar-eg 1]
+         [:ar-eg-and-en 3]
+         [:unspecified nil]]
+
+        "*"
+        [[:en 1]
+         [:en-us 1]
+         [:ar-eg 1]
+         [:ar-eg-and-en 1]
+         [:unspecified nil]]
+
+        "en-us,*;q=0.1"
+        [[:en 1]
+         [:en-us 3]
+         [:ar-eg 1]
+         [:ar-eg-and-en 1]
+         [:unspecified nil]])))

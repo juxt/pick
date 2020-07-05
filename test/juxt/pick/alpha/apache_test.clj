@@ -171,6 +171,7 @@
         "en-us,en;q=0.8,ar-eg;q=0.2" "Howdy!"
         "*" "Hello!"
         "en-us,*;q=0.1" "Howdy!"
+
         ;; No rules of precedence apply to languages. If a '*' has greater
         ;; qvalue than another more specific language, it is still
         ;; selected. Hence, en and ar-eg are preferred over en-us, and en is
@@ -179,6 +180,8 @@
         ;; But, see RFC2616 Section 14.4.: 'The special range "*", if present in
         ;; the Accept-Language field, matches every tag not matched by any other
         ;; range present in the Accept-Language field.'
+
+        ;; So we should see Hello! here, not Howdy!
         "en-us;q=0.8,*" "Hello!"
 
         nil "Hello!")
@@ -190,6 +193,29 @@
                 {:juxt.http/request-headers {}
                  :juxt.http/variants variants})
                (get-in [:juxt.http/variants 0 :juxt.http/content]))))))
+
+;; Check only one language is chosen, and the order in the Accept-Language
+;; header is used if necessary. We don't want multiple languages going into the
+;; encoding selection step, according to step 2.3 of the Apache httpd Negotation
+;; Algorithm (see
+;; https://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm)
+(deftest single-language-selected
+  (is
+   (= 1
+      (count
+       (:juxt.http/variants
+        (pick
+         using-apache-algo
+         {:juxt.http/request-headers
+          {"accept-language" (reap/accept-language "en,fr,de")}
+          :juxt.http/variants
+          [{:id :en
+            :juxt.http/content-language (reap/content-language "en")}
+           {:id :fr
+            :juxt.http/content-language (reap/content-language "fr")}
+           {:id :de
+            :juxt.http/content-language (reap/content-language "de")}]
+          :juxt.http/explain? true}))))))
 
 (deftest integrated-test
   (is

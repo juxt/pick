@@ -283,22 +283,35 @@
 
 (defn- select-better-language-match
   [acc parsed-accept-language-field]
-  (let [qvalue (get parsed-accept-language-field :juxt.http/qvalue 1.0)]
-    (cond-> acc
-      (and
-       (> qvalue (get acc :qvalue 0.0))
-       (basic-language-match?
-        (:juxt.http/language-range parsed-accept-language-field)
-        (get-in acc [:language-tag :juxt.http/langtag])))
-      (conj
-       [:qvalue qvalue]
-       [:apex.debug/parsed-accept-language-field parsed-accept-language-field]))))
+  (let [qvalue (get parsed-accept-language-field :juxt.http/qvalue 1.0)
+        ;; '*' matches "every tag not matched by any other range" (RFC2616) so we
+        ;; use a :specificity value for this purpose. A value of 1 means that a *
+        ;; has been encountered. A value of 2 means that a specific language match
+        ;; as occurred. An implicit value of 0 otherwise.
+        specificity (get acc :specificity 0)]
+    (if (.equals (:juxt.http/language-range parsed-accept-language-field) "*")
+      (cond-> acc
+        (= specificity 0)
+        (conj
+         [:qvalue qvalue]
+         [:specificity 1]
+         [:apex.debug/parsed-accept-language-field parsed-accept-language-field]))
+      (cond-> acc
+        (and
+         (> qvalue (get acc :qvalue 0.0))
+         (basic-language-match?
+          (:juxt.http/language-range parsed-accept-language-field)
+          (get-in acc [:language-tag :juxt.http/langtag])))
+        (conj
+         [:qvalue qvalue]
+         [:specificity 2]
+         [:apex.debug/parsed-accept-language-field parsed-accept-language-field])))))
 
 (defn acceptable-language-quality
-  "Determine the given language's quality (precedence, qvalue) with respect to what
-  is acceptable. The parsed-accept-language-header parameter is a data structure
-  returned from parsing the Accept-Language header with reap. This argument can be nil, meaning
-  that no accept-language header was received:
+  "Determine the given language's quality (qvalue) with respect to what is
+  acceptable. The parsed-accept-language-header parameter is a data structure
+  returned from parsing the Accept-Language header with reap. This argument can
+  be nil, meaning that no accept-language header was received:
 
   'A request without any Accept-Language header field implies that the user
   agent will accept any language in response.' -- RFC 7231 Section 5.3.5
@@ -318,6 +331,8 @@
     (reduce
      select-better-language-match
      {:qvalue 0.0
+      ;; TODO: I don't like using the accumulator to smuggle in a constant, use
+      ;; a closure instead.
       :language-tag parsed-language-tag}
      parsed-accept-language-header)
     ;; No accept-language header, this language is therefore acceptable.
@@ -331,21 +346,57 @@
   (fn [variant]
     (assert variant)
     (if-let [content-language (:juxt.http/content-language variant)]
-      (assoc
-       variant
-       :juxt.http.content-negotiation/language-qvalue
-       (if parsed-accept-language-header
-         (double
-          (apply
-           *
-           (for [lang content-language]
-             (:qvalue
-              (acceptable-language-quality
-               parsed-accept-language-header
-               lang)))))
-         ;; No accept-language header, so language is acceptable.
-         1.0))
+      (let [qualities
+            (when parsed-accept-language-header
+              (for [lang content-language]
+                (acceptable-language-quality
+                 parsed-accept-language-header
+                 lang)))
+
+            combined-qvalue
+            (if qualities
+              (double (apply * (map :qvalue qualities)))
+              1.0)]
+
+        (assoc
+         variant
+         :juxt.http.content-negotiation/language-qvalue
+         combined-qvalue
+         ))
       ;; No content-language, so no quality applied.
+      variant)))
+
+(defn assign-language-ordering
+  "Return a function that will assign a language ordering weight to a variant
+  according to the given parsed accept-language header. A content-language is
+  composed of usually one, but possibly multiple, language tags. Each distinct
+  content-language in the set of possible variants is assigned a language ordering
+  weight. In the event that there are multiple content languages that share the same highest quality value, then a determination is made based on order given in the Accept-Language
+
+  This is to help satisfy the requirement of step 3 of the Apache
+  content-negotiation algorithm, but this function is core since it might be
+  used by alternative algorithms."
+  [parsed-accept-language-header]
+  (fn [variant]
+    (assert variant)
+    (if-let [content-language
+             (when parsed-accept-language-header
+               (:juxt.http/content-language variant))]
+      (let [weight (fn [accept weighting-factor]
+                     (if (some #(basic-language-match?
+                                 (:juxt.http/language-range accept)
+                                 %) (map :juxt.http/langtag content-language))
+                       weighting-factor
+                       0))
+            ;; Weight factors is a power series to create a weight in base N
+            ;; where N is the number of accept fields.
+            weight-factors (iterate
+                            #(/ % 2)
+                            (long (Math/pow 2 (dec (count parsed-accept-language-header)))))
+            combined-ordering-weight (reduce + (map weight parsed-accept-language-header weight-factors))]
+        (assoc variant :juxt.http.content-negotiation/language-ordering-weight combined-ordering-weight))
+      ;; No content-language (or no accept-language header) so no
+      ;; language-ordering applied.
       variant)))
 
 (defn rate-variants [request-headers variants]
@@ -360,6 +411,9 @@
      (get request-headers "accept"))
 
     (assign-language-quality
+     (get request-headers "accept-language"))
+
+    (assign-language-ordering
      (get request-headers "accept-language"))
 
     (assign-encoding-quality

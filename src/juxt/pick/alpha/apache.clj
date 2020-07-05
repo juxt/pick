@@ -35,6 +35,16 @@
         (segment-by variants :juxt.http.content-negotiation/language-qvalue >)]
     (add-meta result #'select-languages)))
 
+(defn
+  ^{:juxt.http.content-negotiation.apache/step 3}
+  select-language
+  "Select the variants with the best language match, using either the order of
+  languages in the Accept-Language header (if present)."
+  [{:juxt.http/keys [variants]}]
+  (let [result
+        (segment-by variants :juxt.http.content-negotiation/language-ordering-weight >)]
+    (add-meta result #'select-language)))
+
 (defn ^{:juxt.http.content-negotiation.apache/step 5}
   select-charsets
   "Select variants with the best charset media parameters, as given on the
@@ -97,6 +107,8 @@
          [select-media-type
 
           select-languages
+
+          select-language
 
           ;; TODO: Select the variants with the highest 'level' media
           ;; parameter (used to give the version of text/html media types).
