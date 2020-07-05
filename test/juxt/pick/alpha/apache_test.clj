@@ -214,8 +214,7 @@
            {:id :fr
             :juxt.http/content-language (reap/content-language "fr")}
            {:id :de
-            :juxt.http/content-language (reap/content-language "de")}]
-          :juxt.http/explain? true}))))))
+            :juxt.http/content-language (reap/content-language "de")}]}))))))
 
 (deftest integrated-test
   (is
@@ -228,7 +227,7 @@
        :juxt.http/content-type (reap/content-type "text/html")}
       {:id :plain
        :juxt.http/content-type (reap/content-type "text/plain")}]
-     :juxt.http/explain? false})))
+     :juxt.http.content-negotiation/explain? false})))
 
 (deftest explain-test
   (let [request
@@ -271,10 +270,10 @@
          using-apache-algo
          {:juxt.http/request request
           :juxt.http/variants variants
-          :juxt.http/explain? true})
+          :juxt.http.content-negotiation/explain? true})
 
         explain
-        (:juxt.http/explain select-explain)]
+        (:juxt.http.content-negotiation/explain select-explain)]
 
     (testing "disable explain"
       (is
@@ -284,8 +283,8 @@
           using-apache-algo
           {:juxt.http/request request
            :juxt.http/variants variants
-           :juxt.http/explain? false})
-         :juxt.http/explain))))
+           :juxt.http.content-negotiation/explain? false})
+         :juxt.http.content-negotiation/explain))))
 
     (testing "no explain by default"
       (is
@@ -295,6 +294,6 @@
           using-apache-algo
           {:juxt.http/request request
            :juxt.http/variants variants})
-         :juxt.http/explain))))
+         :juxt.http.content-negotiation/explain))))
 
     (testing (is (map? explain)))))

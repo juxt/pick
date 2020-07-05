@@ -85,11 +85,12 @@
 
   :juxt.http/request-headers – a map, keyed by the lower-case header name with the reap parsed headers as values
   :juxt.http/variants – a collection of variants
-  :juxt.http/explain? – if truthy, provide an explain in the return value
-  :juxt.http/inject-steps – in future, this will be used to inject additional steps
+  :juxt.http.content-negotiation/explain? – if truthy, provide an explain in the return value
+  :juxt.http.content-negotiation/inject-steps – in future, this will be used to inject additional steps
 
   "
-  [{:juxt.http/keys [request-headers variants explain?] :as opts}]
+  [{:juxt.http/keys [request-headers variants]
+    :juxt.http.content-negotiation/keys [explain?] :as opts}]
   (let [rated-variants (rate-variants request-headers variants)
         explain
         (reduce
@@ -134,7 +135,7 @@
            (conj {:juxt.http/field-name "accept-language"})
            (> (count (distinct (keep (comp #(get % "charset") :juxt.http/parameter-map :juxt.http/content-type) variants))) 1)
            (conj {:juxt.http/field-name "accept-charset"}))}
-        explain? (assoc :juxt.http/explain explain))))
+        explain? (assoc :juxt.http.content-negotiation/explain explain))))
 
 ;; Extend the juxt.pick.alpha.core.VariantSelector via metadata
 (def using-apache-algo
