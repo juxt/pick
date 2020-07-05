@@ -66,15 +66,16 @@
   [{:juxt.http/keys [variants]}]
   (let [result
         (segment-by variants :juxt.http.content-negotiation/encoding-qvalue >)]
-    (add-meta result #'select-encoding)))
+    (-> result
+     (add-meta #'select-encoding)
+     (assoc :originals variants))))
 
 (defn
   ^{:juxt.http.content-negotiation.apache/step 8}
   select-smallest-content-length
   "Select the variants with the smallest content length."
   [{:juxt.http/keys [variants]}]
-  (-> variants
-      (segment-by :juxt.http/content-length <)
+  (-> {:variants variants :rejects []}
       (assoc :phase "select smallest content length")))
 
 (defn apache-select-variant
@@ -96,10 +97,13 @@
         (reduce
          (fn [acc step]
            ;; Short-circuit the algorithm when 0 or 1 representation remains.
+           #_(-> (step (assoc opts :juxt.http/variants (:variants acc)))
+               (assoc :prev acc))
+
            (if (< (count (:variants acc)) 2)
-             (reduced acc)
-             (-> (step (assoc opts :juxt.http/variants (:variants acc)))
-                 (assoc :prev acc))))
+               (reduced acc)
+               (-> (step (assoc opts :juxt.http/variants (:variants acc)))
+                   (assoc :prev acc))))
 
          {:variants (vec rated-variants)
           :rejects []}

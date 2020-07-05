@@ -436,7 +436,7 @@
   (reduce
    (fn [acc variant]
      (let [score (or (scorer variant) 0)
-           max-score-so-far (get acc :max-score-so-far 0)
+           max-score-so-far (get acc :max-score-so-far -1)
            variant (assoc variant :score score)]
        (cond
          (comparator score max-score-so-far)

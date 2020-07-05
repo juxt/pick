@@ -65,62 +65,65 @@
       ))
 
 (deftest accept-encoding-test
-  (are [accept-encoding-header variants expected-id]
+  (are [accept-encoding-header variants expected]
       (=
-       expected-id
-       (-> (pick
-            using-apache-algo
-            {:juxt.http/request-headers
-             {"accept-encoding"
-              (reap/accept-encoding
-               accept-encoding-header)}
-             :juxt.http/variants variants})
-           (get-in [:juxt.http/variants 0 :id])))
+       expected
+       (let [actual (pick
+                     using-apache-algo
+                     {:juxt.http/request-headers
+                      {"accept-encoding"
+                       (reap/accept-encoding
+                        accept-encoding-header)}
+                      :juxt.http/variants variants})]
+         (vec
+          (for [v (:juxt.http/variants actual)]
+            {:id (:id v)
+             :qvalue (:juxt.http.content-negotiation/encoding-qvalue v)}))))
 
       "gzip"
       [{:id :gzip
         :juxt.http/content-encoding
         (reap/content-encoding "gzip")}]
-      :gzip
+      [{:id :gzip :qvalue 1.0}]
 
       "deflate"
-      [{:id :deflate
+      [{:id :deflate-1
         :juxt.http/content-encoding
         (reap/content-encoding "deflate")}]
-      :deflate
+      [{:id :deflate-1 :qvalue 1.0}]
 
       "gzip;q=0.8,deflate"
-      [{:id :deflate
+      [{:id :deflate-2
         :juxt.http/content-encoding
         (reap/content-encoding "deflate")}
        {:id :gzip
         :juxt.http/content-encoding
         (reap/content-encoding "gzip")}]
-      :deflate
+      [{:id :deflate-2 :qvalue 1.0}]
 
       ;; Pick first acceptable variant as per variant order, rather than
       ;; accept-encoding header order.
       "gzip,deflate"
-      [{:id :deflate
+      [{:id :deflate-3
         :juxt.http/content-encoding
         (reap/content-encoding "deflate")}
        {:id :gzip
         :juxt.http/content-encoding
         (reap/content-encoding "gzip")}]
-      :deflate
+      [{:id :deflate-3 :qvalue 1.0} {:id :gzip :qvalue 1.0}]
 
       "gzip,deflate"
       [{:id :gzip-then-deflate
         :juxt.http/content-encoding
         (reap/content-encoding "gzip,deflate")}]
-      :gzip-then-deflate
+      [{:id :gzip-then-deflate :qvalue 1.0}]
 
       "gzip"
       [{:id :gzip-then-deflate
         :juxt.http/content-encoding
         (reap/content-encoding "gzip,deflate")}
        {:id :identity}]
-      :identity
+      [{:id :identity :qvalue 1.0}]
 
       ;; "If an Accept-Encoding header field is present in a request and none of
       ;; the available representations for the response have a content-coding
@@ -130,31 +133,63 @@
       [{:id :identity}
        {:id :gzip
         :juxt.http/content-encoding (reap/content-encoding "gzip")}]
-      :identity))
+      [{:id :identity :qvalue 1.0}]
+
+      ;; "If the Accept-Encoding field-value is empty, then only the "identity"
+      ;; encoding is acceptable." -- RFC 2616
+      ""
+      [{:id :identity}
+       {:id :gzip
+        :juxt.http/content-encoding (reap/content-encoding "gzip")}]
+      [{:id :identity :qvalue 1.0}]
+
+      ;; As above, but if no identity encoding is acceptable we return a variant
+      ;; even if it is not acceptable (has a qvalue of 0). It is now up to the
+      ;; caller to return use the encoding in a 200 or return a 406 status.
+      ""
+      [{:id :gzip-1
+        :juxt.http/content-encoding (reap/content-encoding "gzip")}]
+      [{:id :gzip-1 :qvalue 0.0}]
+
+      ;; As above, but return multiple (albeit unacceptable) representations and
+      ;; allow the caller to pick one, or return a status 300 or a status 406
+      ;; response.
+      ""
+      [{:id :gzip-2
+        :juxt.http/content-encoding (reap/content-encoding "gzip")}
+       {:id :compress
+        :juxt.http/content-encoding (reap/content-encoding "compress")}]
+      [{:id :gzip-2 :qvalue 0.0}
+       {:id :compress :qvalue 0.0}]
+
+      ;; "If no Accept-Encoding field is in the request, any content-coding is
+      ;; considered acceptable by the user agent."
+      nil
+      [{:id :gzip-3
+        :juxt.http/content-encoding (reap/content-encoding "gzip")}
+       {:id :compress
+        :juxt.http/content-encoding (reap/content-encoding "compress")}]
+      [{:id :gzip-3 :qvalue 1.0}
+       {:id :compress :qvalue 1.0}]))
 
 (deftest accept-language-test
   (let [variants
         [{:id :en
           :juxt.http/content "Hello!"
           :juxt.http/content-language
-          (reap/content-language "en")
-          }
+          (reap/content-language "en")}
 
          {:id :en-us
           :juxt.http/content-language
           (reap/content-language "en-US")
           ;; https://en.wikipedia.org/wiki/Howdy
           ;; Not everyone in the US uses 'Howdy!' but this is just a test...
-          :juxt.http/content "Howdy!"
-          }
+          :juxt.http/content "Howdy!"}
 
          {:id :ar-eg
           :juxt.http/content-language
           (reap/content-language "ar-eg")
-          :juxt.http/content "ألسّلام عليكم"
-          }
-
-         ]]
+          :juxt.http/content "ألسّلام عليكم"}]]
 
     (are [accept-language-header expected-greeting]
         (= expected-greeting
@@ -215,6 +250,8 @@
             :juxt.http/content-language (reap/content-language "fr")}
            {:id :de
             :juxt.http/content-language (reap/content-language "de")}]}))))))
+
+;; Integration testing
 
 (deftest integrated-test
   (is

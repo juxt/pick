@@ -123,8 +123,6 @@
     "gzip;q=0.9,deflate;q=0.5;compress;q=0.2" "gzip,deflate" 0.45
     "gzip;q=0.4,deflate;q=0.5,compress;q=0.2" "gzip,deflate,compress" 0.04))
 
-;; TODO: Quality factors for encodings ("qs" parameter)
-
 (deftest assign-encoding-quality-test
   (let [variants
         [{:id :gzip
