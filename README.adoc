@@ -196,3 +196,8 @@ https://tools.ietf.org/html/rfc7231[RFC 7231] is the normative standard on conte
 This https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation[MDN guide on content negotiation from Mozilla] is very informative.
 
 https://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
+
+While *pick* attempts to be reasonably performant, due to the per-request nature
+of content negotiation some users may consider using a memoization strategy,
+making use of a memoization library such as
+https://github.com/clojure/core.memoize[clojure.core.memoize].
