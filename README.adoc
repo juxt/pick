@@ -184,7 +184,7 @@ keywords in the `juxt.http` namespace are used consistently between libraries,
 maintaining a 'registry' of these keywords, specifying the allowed data types,
 publishing Clojure specs for import and so on. It is expected that users will
 either be happy to use these namespaced keywords in their own programs or write
-transformers to adapt their own data for use by pick.
+transformers to adapt their own data for use by *pick*.
 
 It is recommended to retain the `juxt.http` namespace because of the benefit of
 using other current and future JUXT libraries that integrate with *pick*.
