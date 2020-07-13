@@ -285,16 +285,16 @@
   [acc parsed-accept-language-field]
   (let [qvalue (get parsed-accept-language-field :juxt.http/qvalue 1.0)
         ;; '*' matches "every tag not matched by any other range" (RFC2616) so we
-        ;; use a :specificity value for this purpose. A value of 1 means that a *
+        ;; use a :precedence value for this purpose. A value of 1 means that a *
         ;; has been encountered. A value of 2 means that a specific language match
         ;; as occurred. An implicit value of 0 otherwise.
-        specificity (get acc :specificity 0)]
+        precedence (get acc :precedence 0)]
     (if (.equals (:juxt.http/language-range parsed-accept-language-field) "*")
       (cond-> acc
-        (= specificity 0)
+        (= precedence 0)
         (conj
          [:qvalue qvalue]
-         [:specificity 1]
+         [:precedence 1]
          [:apex.debug/parsed-accept-language-field parsed-accept-language-field]))
       (cond-> acc
         (and
@@ -304,7 +304,7 @@
           (get-in acc [:language-tag :juxt.http/langtag])))
         (conj
          [:qvalue qvalue]
-         [:specificity 2]
+         [:precedence 2]
          [:apex.debug/parsed-accept-language-field parsed-accept-language-field])))))
 
 (defn acceptable-language-quality
