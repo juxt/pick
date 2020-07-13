@@ -174,6 +174,31 @@
                 ;; without a more specific entry for 'identity'."
                 [:unspecified 1.0]]
 
+        ;; "… unless specifically excluded by the Accept-Encoding field stating
+        ;; either 'identity;q=0'"
+        "gzip,identity;q=0"
+        [[:gzip 1.0]
+         [:deflate 0.0]
+         [:gzip-then-deflate 0.0]
+         [:identity 0.0]
+         [:unspecified 0.0]]
+
+        ;; "… or '*;q=0'
+        "gzip,*;q=0"
+        [[:gzip 1.0]
+         [:deflate 0.0]
+         [:gzip-then-deflate 0.0]
+         [:identity 0.0]
+         [:unspecified 0.0]]
+
+        ;; without a more specific entry for 'identity'.
+        "gzip,identity;q=0.8,*;q=0.2"
+        [[:gzip 1.0]
+         [:deflate 0.2]
+         [:gzip-then-deflate 0.2]
+         [:identity 0.8]
+         [:unspecified 0.8]]
+
         "deflate" [[:gzip 0.0]
                    [:deflate 1.0]
                    [:gzip-then-deflate 0.0]
