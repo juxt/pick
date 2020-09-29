@@ -24,5 +24,5 @@
          :main-opts ["-m" "cognitect.test-runner"]}
 
   :lint
-  {:extra-deps {clj-kondo {:mvn/version "RELEASE"}}
+  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "RELEASE"}}
    :main-opts ["-m" "clj-kondo.main" "--lint" "src/juxt"]}}}
