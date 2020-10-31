@@ -254,7 +254,7 @@
 
 ;; Integration testing
 
-(deftest integrated-test
+(deftest integration-test
   (is
    (pick
     using-apache-algo
