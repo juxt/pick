@@ -2,7 +2,10 @@
 
 (ns juxt.pick.alpha.core
   (:require
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [juxt.reap.alpha.rfc4647 :as rfc4647]
+   [juxt.reap.alpha.rfc5646 :as rfc5646]
+   [juxt.reap.alpha.rfc7231 :as rfc7231]))
 
 ;; Content types
 
@@ -24,14 +27,14 @@
   [parsed-accept-field parsed-content-type]
   (cond
     (and
-     (.equalsIgnoreCase (:juxt.http/type parsed-accept-field) (:juxt.http/type parsed-content-type))
-     (.equalsIgnoreCase (:juxt.http/subtype parsed-accept-field) (:juxt.http/subtype parsed-content-type))
+     (.equalsIgnoreCase (::rfc7231/type parsed-accept-field) (::rfc7231/type parsed-content-type))
+     (.equalsIgnoreCase (::rfc7231/subtype parsed-accept-field) (::rfc7231/subtype parsed-content-type))
      ;; Try to match on all the parameters asked for in the accept,
      ;; but discard all others in the content type.
-     (pos? (count (:juxt.http/parameters parsed-accept-field)))
+     (pos? (count (::rfc7231/parameters parsed-accept-field)))
      (match-parameters?
-      (:juxt.http/parameters parsed-accept-field)
-      (:juxt.http/parameter-map parsed-content-type)))
+      (::rfc7231/parameters parsed-accept-field)
+      (::rfc7231/parameter-map parsed-content-type)))
 
     ;; The precedence could be 3, plus the number of parameters in the
     ;; accept. For now, we don't include the count of the parameters
@@ -39,19 +42,19 @@
     4
 
     (and
-     (.equalsIgnoreCase (:juxt.http/type parsed-accept-field) (:juxt.http/type parsed-content-type))
-     (.equalsIgnoreCase (:juxt.http/subtype parsed-accept-field) (:juxt.http/subtype parsed-content-type))
-     (zero? (count (:juxt.http/parameters parsed-accept-field))))
+     (.equalsIgnoreCase (::rfc7231/type parsed-accept-field) (::rfc7231/type parsed-content-type))
+     (.equalsIgnoreCase (::rfc7231/subtype parsed-accept-field) (::rfc7231/subtype parsed-content-type))
+     (zero? (count (::rfc7231/parameters parsed-accept-field))))
     3
 
     (and
-     (.equalsIgnoreCase (:juxt.http/type parsed-accept-field) (:juxt.http/type parsed-content-type))
-     (= "*" (:juxt.http/subtype parsed-accept-field)))
+     (.equalsIgnoreCase (::rfc7231/type parsed-accept-field) (::rfc7231/type parsed-content-type))
+     (= "*" (::rfc7231/subtype parsed-accept-field)))
     2
 
     (and
-     (= "*" (:juxt.http/type parsed-accept-field))
-     (= "*" (:juxt.http/subtype parsed-accept-field)))
+     (= "*" (::rfc7231/type parsed-accept-field))
+     (= "*" (::rfc7231/subtype parsed-accept-field)))
     1))
 
 (defn- select-better-content-type-match
@@ -62,7 +65,7 @@
   [acc parsed-accept-field]
 
   (let [precedence (content-type-match? parsed-accept-field (:content-type acc))
-        qvalue (get parsed-accept-field :juxt.http/qvalue 1.0)]
+        qvalue (get parsed-accept-field ::rfc7231/qvalue 1.0)]
 
     (cond-> acc
       (and
@@ -113,9 +116,9 @@
   [parsed-accept-header]
   (fn [variant]
     (assert variant)
-    (if-let [content-type (:juxt.http/content-type variant)]
+    (if-let [content-type (::rfc7231/content-type variant)]
       (assoc variant
-             :juxt.http.content-negotiation/content-type-qvalue
+             :juxt.pick/content-type-qvalue
              (:qvalue (acceptable-content-type-quality parsed-accept-header content-type)))
       ;; No content-type on variant, return variant untouched.
       variant)))
@@ -129,16 +132,16 @@
     (reduce
      (fn [acc field]
        (cond
-         (= charset (:juxt.http/charset field))
+         (= charset (::rfc7231/charset field))
          (cond-> acc
            (< (get acc :precedence) 2)
-           (conj [:qvalue (get field :juxt.http/qvalue 1.0)]
+           (conj [:qvalue (get field ::rfc7231/qvalue 1.0)]
                  [:precedence 2]
                  [:apex.debug/parsed-accept-charset-field field]))
-         (= "*" (:juxt.http/charset field))
+         (= "*" (::rfc7231/charset field))
          (cond-> acc
            (= (get acc :precedence) 0)
-           (conj [:qvalue (get field :juxt.http/qvalue 1.0)]
+           (conj [:qvalue (get field ::rfc7231/qvalue 1.0)]
                  [:precedence 1]
                  [:apex.debug/parsed-accept-charset-field field]))
          :else acc))
@@ -157,10 +160,10 @@
   [parsed-accept-charset-header]
   (fn [variant]
     (assert variant)
-    (if-let [charset (get-in variant [:juxt.http/content-type :juxt.http/parameter-map "charset"])]
+    (if-let [charset (get-in variant [::rfc7231/content-type ::rfc7231/parameter-map "charset"])]
       (assoc
        variant
-       :juxt.http.content-negotiation/charset-qvalue
+       :juxt.pick/charset-qvalue
        (:qvalue
         (acceptable-charset-quality
          parsed-accept-charset-header
@@ -172,20 +175,20 @@
 
 (defn select-best-encoding-match [parsed-accept-encoding-header entry]
   (reduce
-   (fn [acc {accept-coding :juxt.http/codings :as field}]
+   (fn [acc {accept-coding ::rfc7231/codings :as field}]
 
      (cond
-       (= accept-coding (get entry :juxt.http/content-coding "identity"))
+       (= accept-coding (get entry ::rfc7231/content-coding "identity"))
        (cond-> acc
          (< (get acc :precedence) 2)
-         (conj [:qvalue (get field :juxt.http/qvalue 1.0)]
+         (conj [:qvalue (get field ::rfc7231/qvalue 1.0)]
                [:precedence 2]
                [:apex.debug/parsed-accept-encoding-field field]))
 
        (= accept-coding "*")
        (cond-> acc
          (= (get acc :precedence) 0)
-         (conj [:qvalue (get field :juxt.http/qvalue 1.0)]
+         (conj [:qvalue (get field ::rfc7231/qvalue 1.0)]
                [:precedence 1]
                [:apex.debug/parsed-accept-encoding-field field]))
 
@@ -199,7 +202,7 @@
                 ;; '*;q=0' without a more specific entry for 'identity'."
                 ;;
                 ;; -- RFC 7231 Section 5.3.4
-                (= (get entry :juxt.http/content-coding "identity") "identity")
+                (= (get entry ::rfc7231/content-coding "identity") "identity")
                 1.0
                 0.0)}
 
@@ -244,16 +247,16 @@
              parsed-accept-encoding-header
              (get
               variant
-              :juxt.http/content-encoding
+              ::rfc7231/content-encoding
               ;; default it no content-encoding found on variant
-              {:juxt.http/content-coding "identity"}))
+              {::rfc7231/content-coding "identity"}))
 
             ;; "If no Accept-Encoding field is in the request, any
             ;; content-coding is considered acceptable by the user agent."
             ;; -- RFC 7231 Section 5.3.4
             1.0)]
       (cond-> variant
-        qvalue (conj [:juxt.http.content-negotiation/encoding-qvalue qvalue])))))
+        qvalue (conj [:juxt.pick/encoding-qvalue qvalue])))))
 
 ;; Languages
 
@@ -283,13 +286,13 @@
 
 (defn- select-better-language-match
   [acc parsed-accept-language-field]
-  (let [qvalue (get parsed-accept-language-field :juxt.http/qvalue 1.0)
+  (let [qvalue (get parsed-accept-language-field ::rfc7231/qvalue 1.0)
         ;; '*' matches "every tag not matched by any other range" (RFC2616) so we
         ;; use a :precedence value for this purpose. A value of 1 means that a *
         ;; has been encountered. A value of 2 means that a specific language match
         ;; as occurred. An implicit value of 0 otherwise.
         precedence (get acc :precedence 0)]
-    (if (.equals (:juxt.http/language-range parsed-accept-language-field) "*")
+    (if (.equals (::rfc4647/language-range parsed-accept-language-field) "*")
       (cond-> acc
         (= precedence 0)
         (conj
@@ -300,8 +303,8 @@
         (and
          (> qvalue (get acc :qvalue 0.0))
          (basic-language-match?
-          (:juxt.http/language-range parsed-accept-language-field)
-          (get-in acc [:language-tag :juxt.http/langtag])))
+          (::rfc4647/language-range parsed-accept-language-field)
+          (get-in acc [:language-tag ::rfc5646/langtag])))
         (conj
          [:qvalue qvalue]
          [:precedence 2]
@@ -345,7 +348,7 @@
   [parsed-accept-language-header]
   (fn [variant]
     (assert variant)
-    (if-let [content-language (:juxt.http/content-language variant)]
+    (if-let [content-language (::rfc7231/content-language variant)]
       (let [qualities
             (when parsed-accept-language-header
               (for [lang content-language]
@@ -360,7 +363,7 @@
 
         (assoc
          variant
-         :juxt.http.content-negotiation/language-qvalue
+         :juxt.pick/language-qvalue
          combined-qvalue
          ))
       ;; No content-language, so no quality applied.
@@ -381,11 +384,11 @@
     (assert variant)
     (if-let [content-language
              (when parsed-accept-language-header
-               (:juxt.http/content-language variant))]
+               (::rfc7231/content-language variant))]
       (let [weight (fn [accept weighting-factor]
                      (if (some #(basic-language-match?
-                                 (:juxt.http/language-range accept)
-                                 %) (map :juxt.http/langtag content-language))
+                                 (::rfc4647/language-range accept)
+                                 %) (map ::rfc5646/langtag content-language))
                        weighting-factor
                        0))
             ;; Weight factors is a power series to create a weight in base N
@@ -394,7 +397,7 @@
                             #(/ % 2)
                             (long (Math/pow 2 (dec (count parsed-accept-language-header)))))
             combined-ordering-weight (reduce + (map weight parsed-accept-language-header weight-factors))]
-        (assoc variant :juxt.http.content-negotiation/language-ordering-weight combined-ordering-weight))
+        (assoc variant :juxt.pick/language-ordering-weight combined-ordering-weight))
       ;; No content-language (or no accept-language header) so no
       ;; language-ordering applied.
       variant)))

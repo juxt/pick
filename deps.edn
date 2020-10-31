@@ -10,7 +10,7 @@
    ;; Reap is useful on the REPL
    :extra-deps {juxt/reap
                 {:git/url "https://github.com/juxt/reap.git"
-                 :sha "55aefc6885480f0f2143a304bbc0d58f838b86d7"}}}
+                 :sha "916366d32413fbc0eb8e5e7adc2347222dc3f18c"}}}
 
   :test {:extra-paths ["test"]
          :extra-deps
@@ -20,7 +20,7 @@
           ;; Reap is used in the tests, but the source does not require it
           juxt/reap
           {:git/url "https://github.com/juxt/reap.git"
-           :sha "55aefc6885480f0f2143a304bbc0d58f838b86d7"}}
+           :sha "916366d32413fbc0eb8e5e7adc2347222dc3f18c"}}
          :main-opts ["-m" "cognitect.test-runner"]}
 
   :lint

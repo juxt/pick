@@ -9,7 +9,10 @@
             assign-language-quality basic-language-match?
             assign-language-ordering
             acceptable-encoding-qvalue assign-encoding-quality]]
-   [juxt.reap.alpha.decoders :as reap]))
+   [juxt.reap.alpha.decoders :as reap]
+   [juxt.reap.alpha.rfc4647 :as rfc4647]
+   [juxt.reap.alpha.rfc5646 :as rfc5646]
+   [juxt.reap.alpha.rfc7231 :as rfc7231]))
 
 (defn round [n]
   (when n
@@ -17,10 +20,12 @@
 
 ;; TODO: test for content-type-match?
 
-;; TODO: Refactor and polish these tests so they are consistent with each other. Try to write this tests in a way that references each part of Section 5.3
+;; TODO: Refactor and polish these tests so they are consistent with each
+;; other. Try to write this tests in a way that references each part of Section
+;; 5.3
 
 ;; TODO: Test for nils, blank strings, negative qvalues, malformed strings -
-;; when and how should a 400 be signalled?
+;; when and how should a 400 be signaled?
 
 (deftest match-parameters-test
   (is (match-parameters? nil nil))
@@ -126,29 +131,29 @@
 (deftest assign-encoding-quality-test
   (let [variants
         [{:id :gzip
-          :juxt.http/content-encoding
+          ::rfc7231/content-encoding
           (reap/content-encoding "gzip")}
 
          {:id :deflate
-          :juxt.http/content-encoding
+          ::rfc7231/content-encoding
           (reap/content-encoding "deflate")}
 
          {:id :gzip-then-deflate
-          :juxt.http/content-encoding
+          ::rfc7231/content-encoding
           (reap/content-encoding "gzip,deflate")}
 
          {:id :identity
-          :juxt.http/content-encoding
+          ::rfc7231/content-encoding
           (reap/content-encoding "identity")}
 
-         ;; :juxt.http/content-encoding defaults to 'identity'
+         ;; ::rfc7231/content-encoding defaults to 'identity'
          {:id :unspecified}]]
 
     (are [accept-encoding-header expected]
         (=
          expected
          (map
-          (juxt :id (comp round :juxt.http.content-negotiation/encoding-qvalue))
+          (juxt :id (comp round :juxt.pick/encoding-qvalue))
           (map
            (assign-encoding-quality
             (reap/accept-encoding
@@ -280,30 +285,30 @@
 (deftest basic-language-match-test
   (is
    (basic-language-match?
-    (:juxt.http/language-range (first (reap/accept-language "en")))
-    (:juxt.http/langtag (first (reap/content-language "en")))))
+    (::rfc4647/language-range (first (reap/accept-language "en")))
+    (::rfc5646/langtag (first (reap/content-language "en")))))
 
   (is
    (basic-language-match?
-    (:juxt.http/language-range (first (reap/accept-language "de-de")))
-    (:juxt.http/langtag (first (reap/content-language "de-DE-1996")))))
+    (::rfc4647/language-range (first (reap/accept-language "de-de")))
+    (::rfc5646/langtag (first (reap/content-language "de-DE-1996")))))
 
   (is
    (not
     (basic-language-match?
-     (:juxt.http/language-range (first (reap/accept-language "de-de")))
-     (:juxt.http/langtag (first (reap/content-language "de-Latn-DE"))))))
+     (::rfc4647/language-range (first (reap/accept-language "de-de")))
+     (::rfc5646/langtag (first (reap/content-language "de-Latn-DE"))))))
 
   (is
    (not
     (basic-language-match?
-     (:juxt.http/language-range (first (reap/accept-language "en-gb")))
-     (:juxt.http/langtag (first (reap/content-language "en"))))))
+     (::rfc4647/language-range (first (reap/accept-language "en-gb")))
+     (::rfc5646/langtag (first (reap/content-language "en"))))))
 
   (is
    (basic-language-match?
-    (:juxt.http/language-range (first (reap/accept-language "*")))
-    (:juxt.http/langtag (first (reap/content-language "de"))))))
+    (::rfc4647/language-range (first (reap/accept-language "*")))
+    (::rfc5646/langtag (first (reap/content-language "de"))))))
 
 ;; TODO: Implement this test
 ;; RFC 7231 Section 5.3.5:
@@ -316,28 +321,28 @@
 
 (deftest assign-language-quality-test
   (let [variants
-        [{:id :en
-          :juxt.http/content "Hello!"
-          :juxt.http/content-language
+        [;; Hello!
+         {:id :en
+          ::rfc7231/content-language
           (reap/content-language "en")}
 
+         ;; Howdy!
+         ;; (Not everyone in the US uses 'Howdy!' but this is just a test…)
+         ;; https://en.wikipedia.org/wiki/Howdy
          {:id :en-us
-          :juxt.http/content-language
-          (reap/content-language "en-US")
-          ;; https://en.wikipedia.org/wiki/Howdy
-          ;; Not everyone in the US uses 'Howdy!' but this is just a test...
-          :juxt.http/content "Howdy!"}
+          ::rfc7231/content-language
+          (reap/content-language "en-US")}
 
+         ;; ألسّلام عليكم
          {:id :ar-eg
-          :juxt.http/content-language
-          (reap/content-language "ar-eg")
-          :juxt.http/content "ألسّلام عليكم"}
+          ::rfc7231/content-language
+          (reap/content-language "ar-eg")}
 
          ;; Content that requires the reader to understand both English and Arabic
+         ;; Hello: ألسّلام عليكم
          {:id :ar-eg-and-en
-          :juxt.http/content-language
-          (reap/content-language "ar-eg,en")
-          :juxt.http/content "Hello: ألسّلام عليكم"}
+          ::rfc7231/content-language
+          (reap/content-language "ar-eg,en")}
 
          ;; Unlike with encoding, if no content-language is specified we don't
          ;; provide a quality. This leaves the decision up to the algorithm.
@@ -347,7 +352,7 @@
         (=
          expected
          (map
-          (juxt :id (comp round :juxt.http.content-negotiation/language-qvalue))
+          (juxt :id (comp round :juxt.pick/language-qvalue))
           (map
            (assign-language-quality
             (reap/accept-language accept-language-header))
@@ -408,7 +413,7 @@
         (=
          expected
          (map
-          (juxt :id :juxt.http.content-negotiation/language-ordering-weight)
+          (juxt :id :juxt.pick/language-ordering-weight)
           (map
            (assign-language-ordering
             (reap/accept-language accept-language-header))

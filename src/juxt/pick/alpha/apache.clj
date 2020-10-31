@@ -3,78 +3,79 @@
 (ns juxt.pick.alpha.apache
   (:require
    [juxt.pick.alpha.core
-    :refer [rate-variants segment-by pick]]))
+    :refer [rate-variants segment-by pick]]
+   [juxt.reap.alpha.rfc7231 :as rfc7231]))
 
 ;; An implementation in Clojure of Apache's httpd Negotiation Algorithm:
 ;; http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
 
 (defn add-meta [result var]
-  (assoc result :juxt.http.content-negotiation.apache/fn-meta (meta var)))
+  (assoc result :juxt.pick.apache/fn-meta (meta var)))
 
 (defn
-  ^{:juxt.http.content-negotiation.apache/step 1}
+  ^{:juxt.pick.apache/step 1}
   select-media-type
   "Multiply the quality factor from the Accept header with the quality-of-source
   factor for this variants media type, and select the variants with the highest
   value."
-  [{:juxt.http/keys [variants]}]
+  [{:juxt.pick/keys [variants]}]
   (let [result
         (segment-by
          variants
-         #(* (get % :juxt.http.content-negotiation/content-type-qvalue 1.0)
-             (get % :juxt.http/quality-of-source 1.0))
+         #(* (get % :juxt.pick/content-type-qvalue 1.0)
+             (get % :juxt.pick/quality-of-source 1.0))
          >)]
     (add-meta result #'select-media-type)))
 
 (defn
-  ^{:juxt.http.content-negotiation.apache/step 2}
+  ^{:juxt.pick.apache/step 2}
   select-languages
   "Select the variants with the highest language quality factor."
-  [{:juxt.http/keys [variants]}]
+  [{:juxt.pick/keys [variants]}]
   (let [result
-        (segment-by variants :juxt.http.content-negotiation/language-qvalue >)]
+        (segment-by variants :juxt.pick/language-qvalue >)]
     (add-meta result #'select-languages)))
 
 (defn
-  ^{:juxt.http.content-negotiation.apache/step 3}
+  ^{:juxt.pick.apache/step 3}
   select-language
   "Select the variants with the best language match, using either the order of
   languages in the Accept-Language header (if present)."
-  [{:juxt.http/keys [variants]}]
+  [{:juxt.pick/keys [variants]}]
   (let [result
-        (segment-by variants :juxt.http.content-negotiation/language-ordering-weight >)]
+        (segment-by variants :juxt.pick/language-ordering-weight >)]
     (add-meta result #'select-language)))
 
-(defn ^{:juxt.http.content-negotiation.apache/step 5}
+(defn ^{:juxt.pick.apache/step 5}
   select-charsets
   "Select variants with the best charset media parameters, as given on the
   Accept-Charset header line. Charset ISO-8859-1 is acceptable unless explicitly
   excluded. Variants with a text/* media type but not explicitly associated with
   a particular charset are assumed to be in ISO-8859-1."
-  [{:juxt.http/keys [variants]}]
-  (let [result (segment-by variants :juxt.http.content-negotiation/charset-qvalue >)]
+  [{:juxt.pick/keys [variants]}]
+  (let [result (segment-by variants :juxt.pick/charset-qvalue >)]
     (add-meta result #'select-charsets)))
 
 (defn
-  ^{:juxt.http.content-negotiation.apache/step 7}
+  ^{:juxt.pick.apache/step 7}
   select-encoding
   "Select the variants with the best encoding. If there are variants with an
   encoding that is acceptable to the user-agent, select only these
   variants. Otherwise if there is a mix of encoded and non-encoded variants,
   select only the unencoded variants. If either all variants are encoded or all
   variants are not encoded, select all variants."
-  [{:juxt.http/keys [variants]}]
+  [{:juxt.pick/keys [variants]}]
   (let [result
-        (segment-by variants :juxt.http.content-negotiation/encoding-qvalue >)]
+        (segment-by variants :juxt.pick/encoding-qvalue >)]
     (-> result
      (add-meta #'select-encoding)
      (assoc :originals variants))))
 
 (defn
-  ^{:juxt.http.content-negotiation.apache/step 8}
+  ^{:juxt.pick.apache/step 8}
   select-smallest-content-length
   "Select the variants with the smallest content length."
-  [{:juxt.http/keys [variants]}]
+  [{:juxt.pick/keys [variants]}]
   (-> {:variants variants :rejects []}
       (assoc :phase "select smallest content length")))
 
@@ -90,19 +91,18 @@
   :juxt.http.content-negotiation/inject-steps – in future, this will be used to inject additional steps
 
   "
-  [{:juxt.http/keys [request-headers variants]
-    :juxt.http.content-negotiation/keys [explain?] :as opts}]
+  [{:juxt.pick/keys [request-headers variants explain?] :as opts}]
   (let [rated-variants (rate-variants request-headers variants)
         explain
         (reduce
          (fn [acc step]
            ;; Short-circuit the algorithm when 0 or 1 representation remains.
-           #_(-> (step (assoc opts :juxt.http/variants (:variants acc)))
+           #_(-> (step (assoc opts :juxt.pick/variants (:variants acc)))
                (assoc :prev acc))
 
            (if (< (count (:variants acc)) 2)
                (reduced acc)
-               (-> (step (assoc opts :juxt.http/variants (:variants acc)))
+               (-> (step (assoc opts :juxt.pick/variants (:variants acc)))
                    (assoc :prev acc))))
 
          {:variants (vec rated-variants)
@@ -128,18 +128,18 @@
           select-smallest-content-length])]
 
     (cond->
-        {:juxt.http/variants (:variants explain)
-         :juxt.http/varying
+        {:juxt.pick/variants (:variants explain)
+         :juxt.pick/varying
          (cond-> []
-           (> (count (distinct (keep :juxt.http/content-type variants))) 1)
-           (conj {:juxt.http/field-name "accept"})
-           (> (count (distinct (keep :juxt.http/content-encoding variants))) 1)
-           (conj {:juxt.http/field-name "accept-encoding"})
-           (> (count (distinct (keep :juxt.http/content-language variants))) 1)
-           (conj {:juxt.http/field-name "accept-language"})
-           (> (count (distinct (keep (comp #(get % "charset") :juxt.http/parameter-map :juxt.http/content-type) variants))) 1)
-           (conj {:juxt.http/field-name "accept-charset"}))}
-        explain? (assoc :juxt.http.content-negotiation/explain explain))))
+           (> (count (distinct (keep ::rfc7231/content-type variants))) 1)
+           (conj {:juxt.pick/field-name "accept"})
+           (> (count (distinct (keep ::rfc7231/content-encoding variants))) 1)
+           (conj {:juxt.pick/field-name "accept-encoding"})
+           (> (count (distinct (keep ::rfc7231/content-language variants))) 1)
+           (conj {:juxt.pick/field-name "accept-language"})
+           (> (count (distinct (keep (comp #(get % "charset") ::rfc7231/parameter-map ::rfc7231/content-type) variants))) 1)
+           (conj {:juxt.pick/field-name "accept-charset"}))}
+        explain? (assoc :juxt.pick/explain explain))))
 
 ;; Extend the juxt.pick.alpha.core.VariantSelector via metadata
 (def using-apache-algo
