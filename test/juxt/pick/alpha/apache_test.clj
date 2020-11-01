@@ -3,8 +3,7 @@
 (ns juxt.pick.alpha.apache-test
   (:require
    [clojure.test :refer [deftest is are testing]]
-   [juxt.pick.alpha.core :refer [pick]]
-   [juxt.pick.alpha.apache :refer [using-apache-algo]]
+   [juxt.pick.alpha.apache :refer [apache-select-variant]]
    [juxt.reap.alpha.decoders :as reap]
    [juxt.reap.alpha.rfc7231 :as rfc7231]))
 
@@ -13,8 +12,7 @@
   (are [accept-header expected-content]
       (= expected-content
          (->
-          (pick
-           using-apache-algo
+          (apache-select-variant
            {:juxt.pick/request-headers
             {"accept" (reap/accept accept-header)}
             :juxt.pick/variants
@@ -69,8 +67,7 @@
   (are [accept-encoding-header variants expected]
       (=
        expected
-       (let [actual (pick
-                     using-apache-algo
+       (let [actual (apache-select-variant
                      {:juxt.pick/request-headers
                       {"accept-encoding"
                        (reap/accept-encoding
@@ -195,8 +192,7 @@
     (are [accept-language-header expected-greeting]
         (= expected-greeting
            (->
-            (pick
-             using-apache-algo
+            (apache-select-variant
              {:juxt.pick/request-headers
               {"accept-language" (reap/accept-language accept-language-header)}
               :juxt.pick/variants variants})
@@ -224,8 +220,7 @@
 
     ;; If no Accept-Language header, just pick the first variant.
     (is (= "Hello!"
-           (-> (pick
-                using-apache-algo
+           (-> (apache-select-variant
                 {:juxt.pick/request-headers {}
                  :juxt.pick/variants variants})
                (get-in [:juxt.pick/variants 0 :content]))))))
@@ -240,8 +235,7 @@
    (= 1
       (count
        (:juxt.pick/variants
-        (pick
-         using-apache-algo
+        (apache-select-variant
          {:juxt.pick/request-headers
           {"accept-language" (reap/accept-language "en,fr,de")}
           :juxt.pick/variants
@@ -256,8 +250,7 @@
 
 (deftest integration-test
   (is
-   (pick
-    using-apache-algo
+   (apache-select-variant
     {:juxt.pick/request
      {"accept" (reap/accept "text/html")}
      :juxt.pick/variants
@@ -304,8 +297,7 @@
           (reap/content-language "en")}]
 
         select-explain
-        (pick
-         using-apache-algo
+        (apache-select-variant
          {:juxt.pick/request request
           :juxt.pick/variants variants
           :juxt.pick/explain? true})
@@ -317,8 +309,7 @@
       (is
        (nil?
         (find
-         (pick
-          using-apache-algo
+         (apache-select-variant
           {:juxt.pick/request request
            :juxt.pick/variants variants
            :juxt.pick/explain? false})
@@ -328,8 +319,7 @@
       (is
        (nil?
         (find
-         (pick
-          using-apache-algo
+         (apache-select-variant
           {:juxt.pick/request request
            :juxt.pick/variants variants})
          :juxt.pick/explain))))

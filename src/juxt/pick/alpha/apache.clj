@@ -3,7 +3,7 @@
 (ns juxt.pick.alpha.apache
   (:require
    [juxt.pick.alpha.core
-    :refer [rate-representations segment-by pick]]
+    :refer [rate-representations segment-by]]
    [juxt.reap.alpha.rfc7231 :as rfc7231]))
 
 ;; An implementation in Clojure of Apache's httpd Negotiation Algorithm:
@@ -140,10 +140,3 @@
            (> (count (distinct (keep (comp #(get % "charset") ::rfc7231/parameter-map ::rfc7231/content-type) variants))) 1)
            (conj {:juxt.pick/field-name "accept-charset"}))}
         explain? (assoc :juxt.pick/explain explain))))
-
-;; Extend the juxt.pick.alpha.core.VariantSelector via metadata
-(def using-apache-algo
-  (with-meta
-    {:description "Implementation of Apache's content negotiation algorithm"
-     :url "http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm"}
-    {`pick (fn [_ opts] (apache-select-variant opts))}))

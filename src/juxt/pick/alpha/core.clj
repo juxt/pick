@@ -459,7 +459,3 @@
          (update acc :rejects conj representation))))
    {:variants [] :rejects []}
    representations))
-
-(defprotocol VariantSelector
-  :extend-via-metadata true
-  (pick [_ opts]))
