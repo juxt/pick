@@ -3,7 +3,7 @@
 (ns juxt.pick.alpha.apache-test
   (:require
    [clojure.test :refer [deftest is are testing]]
-   [juxt.pick.alpha.apache :refer [apache-select-variant]]
+   [juxt.pick.alpha.apache :refer [apache-select-representation]]
    [juxt.reap.alpha.decoders :as reap]
    [juxt.reap.alpha.rfc7231 :as rfc7231]))
 
@@ -12,10 +12,10 @@
   (are [accept-header expected-content]
       (= expected-content
          (->
-          (apache-select-variant
+          (apache-select-representation
            {:juxt.pick/request-headers
             {"accept" (reap/accept accept-header)}
-            :juxt.pick/variants
+            :juxt.pick/representations
             [{:id :html
               :content "<h1>Hello World!</h1>"
               ::rfc7231/content-type
@@ -67,12 +67,12 @@
   (are [accept-encoding-header variants expected]
       (=
        expected
-       (let [actual (apache-select-variant
+       (let [actual (apache-select-representation
                      {:juxt.pick/request-headers
                       {"accept-encoding"
                        (reap/accept-encoding
                         accept-encoding-header)}
-                      :juxt.pick/variants variants})]
+                      :juxt.pick/representations variants})]
          (vec
           (for [v (:juxt.pick/variants actual)]
             {:id (:id v)
@@ -192,10 +192,10 @@
     (are [accept-language-header expected-greeting]
         (= expected-greeting
            (->
-            (apache-select-variant
+            (apache-select-representation
              {:juxt.pick/request-headers
               {"accept-language" (reap/accept-language accept-language-header)}
-              :juxt.pick/variants variants})
+              :juxt.pick/representations variants})
             (get-in [:juxt.pick/variants 0 :content])))
         "en" "Hello!"
         "en-us" "Howdy!"
@@ -220,9 +220,9 @@
 
     ;; If no Accept-Language header, just pick the first variant.
     (is (= "Hello!"
-           (-> (apache-select-variant
+           (-> (apache-select-representation
                 {:juxt.pick/request-headers {}
-                 :juxt.pick/variants variants})
+                 :juxt.pick/representations variants})
                (get-in [:juxt.pick/variants 0 :content]))))))
 
 ;; Check only one language is chosen, and the order in the Accept-Language
@@ -235,10 +235,10 @@
    (= 1
       (count
        (:juxt.pick/variants
-        (apache-select-variant
+        (apache-select-representation
          {:juxt.pick/request-headers
           {"accept-language" (reap/accept-language "en,fr,de")}
-          :juxt.pick/variants
+          :juxt.pick/representations
           [{:id :en
             ::rfc7231/content-language (reap/content-language "en")}
            {:id :fr
@@ -250,10 +250,10 @@
 
 (deftest integration-test
   (is
-   (apache-select-variant
+   (apache-select-representation
     {:juxt.pick/request
      {"accept" (reap/accept "text/html")}
-     :juxt.pick/variants
+     :juxt.pick/representations
      [{:id :html
        ::rfc7231/content-type (reap/content-type "text/html")}
       {:id :plain
@@ -297,9 +297,9 @@
           (reap/content-language "en")}]
 
         select-explain
-        (apache-select-variant
+        (apache-select-representation
          {:juxt.pick/request request
-          :juxt.pick/variants variants
+          :juxt.pick/representations variants
           :juxt.pick/explain? true})
 
         explain
@@ -309,9 +309,9 @@
       (is
        (nil?
         (find
-         (apache-select-variant
+         (apache-select-representation
           {:juxt.pick/request request
-           :juxt.pick/variants variants
+           :juxt.pick/representations variants
            :juxt.pick/explain? false})
          :juxt.pick/explain))))
 
@@ -319,9 +319,9 @@
       (is
        (nil?
         (find
-         (apache-select-variant
+         (apache-select-representation
           {:juxt.pick/request request
-           :juxt.pick/variants variants})
+           :juxt.pick/representations variants})
          :juxt.pick/explain))))
 
     (testing (is (map? explain)))))

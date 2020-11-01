@@ -79,20 +79,20 @@
   (-> {:variants variants :rejects []}
       (assoc :phase "select smallest content length")))
 
-(defn apache-select-variant
+(defn apache-select-representation
   "Implementation of the Apache httpd content-negotiation algorithm detailed at
   https://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
 
   Options include:
 
-  :juxt.http/request-headers – a map, keyed by the lower-case header name with the reap parsed headers as values
-  :juxt.http/variants – a collection of variants
-  :juxt.http.content-negotiation/explain? – if truthy, provide an explain in the return value
-  :juxt.http.content-negotiation/inject-steps – in future, this will be used to inject additional steps
+  :juxt.pick/request-headers – a map, keyed by the lower-case header name with the reap parsed headers as values
+  :juxt.pick/representations – a collection of representations
+  :juxt.pick/explain? – if truthy, provide an explain in the return value
+  :juxt.pick/inject-steps – in future, this will be used to inject additional steps
 
   "
-  [{:juxt.pick/keys [request-headers variants explain?] :as opts}]
-  (let [rated-variants (rate-representations request-headers variants)
+  [{:juxt.pick/keys [request-headers representations explain?] :as opts}]
+  (let [rated-variants (rate-representations request-headers representations)
         explain
         (reduce
          (fn [acc step]
@@ -131,12 +131,12 @@
         {:juxt.pick/variants (:variants explain)
          :juxt.pick/varying
          (cond-> []
-           (> (count (distinct (keep ::rfc7231/content-type variants))) 1)
+           (> (count (distinct (keep ::rfc7231/content-type representations))) 1)
            (conj {:juxt.pick/field-name "accept"})
-           (> (count (distinct (keep ::rfc7231/content-encoding variants))) 1)
+           (> (count (distinct (keep ::rfc7231/content-encoding representations))) 1)
            (conj {:juxt.pick/field-name "accept-encoding"})
-           (> (count (distinct (keep ::rfc7231/content-language variants))) 1)
+           (> (count (distinct (keep ::rfc7231/content-language representations))) 1)
            (conj {:juxt.pick/field-name "accept-language"})
-           (> (count (distinct (keep (comp #(get % "charset") ::rfc7231/parameter-map ::rfc7231/content-type) variants))) 1)
+           (> (count (distinct (keep (comp #(get % "charset") ::rfc7231/parameter-map ::rfc7231/content-type) representations))) 1)
            (conj {:juxt.pick/field-name "accept-charset"}))}
         explain? (assoc :juxt.pick/explain explain))))
