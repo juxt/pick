@@ -58,9 +58,9 @@
       "text/html;LEVEL=3;charset=utf-8" {:precedence 4 :qvalue 0.5}))
 
 ;; This test represents the table in RFC 7231 Section 5.3.2, where quality
-;; values are determined from matching a variant's content-type according to
-;; rules of precedence. These rules are specified in the RFC and are independent
-;; of the actual content negotiation algorithm that is used.
+;; values are determined from matching a representation's content-type according
+;; to rules of precedence. These rules are specified in the RFC and are
+;; independent of the actual content negotiation algorithm that is used.
 (deftest acceptable-content-type-qvalue-test
 
   (let [accepts
@@ -129,7 +129,7 @@
     "gzip;q=0.4,deflate;q=0.5,compress;q=0.2" "gzip,deflate,compress" 0.04))
 
 (deftest assign-encoding-quality-test
-  (let [variants
+  (let [representations
         [{:id :gzip
           ::rfc7231/content-encoding
           (reap/content-encoding "gzip")}
@@ -158,7 +158,7 @@
            (assign-encoding-quality
             (reap/accept-encoding
              accept-encoding-header))
-           variants)))
+           representations)))
 
       ;; Rule 1: "If no Accept-Encoding field is in the request, any content-coding is
       ;; considered acceptable by the user agent."

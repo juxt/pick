@@ -90,8 +90,8 @@
 
   The qvalue is set to 0 if 'not acceptable' (See RFC 7231 Section 5.3.1). This
   still gives the content negotiation algorithm the chance of returning a
-  variant, if there are no more preferable variants and if returning one is
-  preferable to returning a 406 status code.
+  representation, if there are no more preferable representations and if
+  returning one is preferable to returning a 406 status code.
 
   The parsed-accept-header argument can be nil, which represents the absence of
   the header: 'A request without any Accept header field implies that the user
@@ -112,16 +112,16 @@
 
 (defn assign-content-type-quality
   "Return a function that will assign the content-type quality to a given
-  variant according to the given (parsed) accept header."
+  representation according to the given (parsed) accept header."
   [parsed-accept-header]
-  (fn [variant]
-    (assert variant)
-    (if-let [content-type (::rfc7231/content-type variant)]
-      (assoc variant
+  (fn [representation]
+    (assert representation)
+    (if-let [content-type (::rfc7231/content-type representation)]
+      (assoc representation
              :juxt.pick/content-type-qvalue
              (:qvalue (acceptable-content-type-quality parsed-accept-header content-type)))
-      ;; No content-type on variant, return variant untouched.
-      variant)))
+      ;; No content-type on representation, return representation untouched.
+      representation)))
 
 ;; Charsets
 
@@ -151,25 +151,25 @@
     {:qvalue 1.0}))
 
 (defn assign-charset-quality
-  "Return a function that will assign a charset quality to a variant according to
-  the given parsed accept-charset header. This argument can be nil, meaning that
-  no accept-charset was received.
+  "Return a function that will assign a charset quality to a representation
+  according to the given parsed accept-charset header. This argument can be nil,
+  meaning that no accept-charset was received.
 
   'A request without any Accept-Charset header field implies that the user agent
   will accept any charset in response.' -- RFC 7231 Section 5.3.3"
   [parsed-accept-charset-header]
-  (fn [variant]
-    (assert variant)
-    (if-let [charset (get-in variant [::rfc7231/content-type ::rfc7231/parameter-map "charset"])]
+  (fn [representation]
+    (assert representation)
+    (if-let [charset (get-in representation [::rfc7231/content-type ::rfc7231/parameter-map "charset"])]
       (assoc
-       variant
+       representation
        :juxt.pick/charset-qvalue
        (:qvalue
         (acceptable-charset-quality
          parsed-accept-charset-header
          charset)))
-      ;; No charset on variant, return variant untouched.
-      variant)))
+      ;; No charset on representation, return representation untouched.
+      representation)))
 
 ;; Encodings
 
@@ -229,8 +229,8 @@
        (select-best-encoding-match parsed-accept-encoding-header entry))))))
 
 (defn assign-encoding-quality
-  "Returns a function that will assoc a quality on a variant, according to the
-  given parsed Accept-Encoding header. This argument can be nil, which is
+  "Returns a function that will assoc a quality on a representation, according to
+  the given parsed Accept-Encoding header. This argument can be nil, which is
   interpreted to mean that no Accept-Encoding header is present.
 
  'A request without an Accept-Encoding header field implies that the user agent
@@ -239,23 +239,23 @@
   will be able to correctly process all encodings.'  -- RFC 7231 Section 5.3.4
   "
   [parsed-accept-encoding-header]
-  (fn [variant]
-    (assert variant)
+  (fn [representation]
+    (assert representation)
     (let [qvalue
           (if parsed-accept-encoding-header
             (acceptable-encoding-qvalue
              parsed-accept-encoding-header
              (get
-              variant
+              representation
               ::rfc7231/content-encoding
-              ;; default it no content-encoding found on variant
+              ;; default it no content-encoding found on representation
               {::rfc7231/content-coding "identity"}))
 
             ;; "If no Accept-Encoding field is in the request, any
             ;; content-coding is considered acceptable by the user agent."
             ;; -- RFC 7231 Section 5.3.4
             1.0)]
-      (cond-> variant
+      (cond-> representation
         qvalue (conj [:juxt.pick/encoding-qvalue qvalue])))))
 
 ;; Languages
@@ -325,8 +325,8 @@
 
   The qvalue is set to 0 if 'not acceptable' (See RFC 7231 Section 5.3.1). This
   still gives the content negotiation algorithm the chance of returning a
-  variant, if there are no more preferable variants and if returning one is
-  preferable to returning a 406 status code."
+  representation, if there are no more preferable representations and if
+  returning one is preferable to returning a 406 status code."
 
   [parsed-accept-language-header parsed-language-tag]
 
@@ -343,12 +343,12 @@
      :language-tag parsed-language-tag}))
 
 (defn assign-language-quality
-  "Return a function that will assign a language quality to a variant according to
-  the given parsed accept-language header."
+  "Return a function that will assign a language quality to a representation
+  according to the given parsed accept-language header."
   [parsed-accept-language-header]
-  (fn [variant]
-    (assert variant)
-    (if-let [content-language (::rfc7231/content-language variant)]
+  (fn [representation]
+    (assert representation)
+    (if-let [content-language (::rfc7231/content-language representation)]
       (let [qualities
             (when parsed-accept-language-header
               (for [lang content-language]
@@ -362,29 +362,31 @@
               1.0)]
 
         (assoc
-         variant
+         representation
          :juxt.pick/language-qvalue
          combined-qvalue
          ))
       ;; No content-language, so no quality applied.
-      variant)))
+      representation)))
 
 (defn assign-language-ordering
-  "Return a function that will assign a language ordering weight to a variant
-  according to the given parsed accept-language header. A content-language is
-  composed of usually one, but possibly multiple, language tags. Each distinct
-  content-language in the set of possible variants is assigned a language ordering
-  weight. In the event that there are multiple content languages that share the same highest quality value, then a determination is made based on order given in the Accept-Language
+  "Return a function that will assign a language ordering weight to a
+  representation according to the given parsed accept-language header. A
+  content-language is composed of usually one, but possibly multiple, language
+  tags. Each distinct content-language in the set of possible representations is
+  assigned a language ordering weight. In the event that there are multiple
+  content languages that share the same highest quality value, then a
+  determination is made based on order given in the Accept-Language
 
   This is to help satisfy the requirement of step 3 of the Apache
   content-negotiation algorithm, but this function is core since it might be
   used by alternative algorithms."
   [parsed-accept-language-header]
-  (fn [variant]
-    (assert variant)
+  (fn [representation]
+    (assert representation)
     (if-let [content-language
              (when parsed-accept-language-header
-               (::rfc7231/content-language variant))]
+               (::rfc7231/content-language representation))]
       (let [weight (fn [accept weighting-factor]
                      (if (some #(basic-language-match?
                                  (::rfc4647/language-range accept)
@@ -397,12 +399,12 @@
                             #(/ % 2)
                             (long (Math/pow 2 (dec (count parsed-accept-language-header)))))
             combined-ordering-weight (reduce + (map weight parsed-accept-language-header weight-factors))]
-        (assoc variant :juxt.pick/language-ordering-weight combined-ordering-weight))
+        (assoc representation :juxt.pick/language-ordering-weight combined-ordering-weight))
       ;; No content-language (or no accept-language header) so no
       ;; language-ordering applied.
-      variant)))
+      representation)))
 
-(defn rate-variants [request-headers variants]
+(defn rate-representations [request-headers representations]
   (map
 
    ;; Ordering of dimensions is as per description here:
@@ -425,37 +427,38 @@
     (assign-charset-quality
      (get request-headers "accept-charset")))
 
-   variants))
+   representations))
 
 (defn segment-by
-  "Return a map containing a :variants entry containing a collection of variants
-  which match the highest score, and :rejects containing a collection of
-  variants with a lower score. The score is determined by the scorer function
-  which is called with the variant as a single argument.
+  "Return a map containing a :variants entry containing a collection of
+  representations which match the highest score, and :rejects containing a
+  collection of representations with a lower score. The score is determined by
+  the scorer function which is called with the representation as a single
+  argument.
 
   This function is commonly used when negotiating representations based on
   process-of-elimination techniques."
-  [variants scorer comparator]
+  [representations scorer comparator]
   (reduce
-   (fn [acc variant]
-     (let [score (or (scorer variant) 0)
+   (fn [acc representation]
+     (let [score (or (scorer representation) 0)
            max-score-so-far (get acc :max-score-so-far -1)
-           variant (assoc variant :score score)]
+           representation (assoc representation :score score)]
        (cond
          (comparator score max-score-so-far)
          (-> acc
              (assoc
-              :variants [variant]
+              :variants [representation]
               :max-score-so-far score)
              (update :rejects into (:variants acc)))
 
          (= score max-score-so-far)
-         (update acc :variants conj variant)
+         (update acc :variants conj representation)
 
          :else
-         (update acc :rejects conj variant))))
+         (update acc :rejects conj representation))))
    {:variants [] :rejects []}
-   variants))
+   representations))
 
 (defprotocol VariantSelector
   :extend-via-metadata true

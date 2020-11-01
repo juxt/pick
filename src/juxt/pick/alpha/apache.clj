@@ -3,7 +3,7 @@
 (ns juxt.pick.alpha.apache
   (:require
    [juxt.pick.alpha.core
-    :refer [rate-variants segment-by pick]]
+    :refer [rate-representations segment-by pick]]
    [juxt.reap.alpha.rfc7231 :as rfc7231]))
 
 ;; An implementation in Clojure of Apache's httpd Negotiation Algorithm:
@@ -92,7 +92,7 @@
 
   "
   [{:juxt.pick/keys [request-headers variants explain?] :as opts}]
-  (let [rated-variants (rate-variants request-headers variants)
+  (let [rated-variants (rate-representations request-headers variants)
         explain
         (reduce
          (fn [acc step]
