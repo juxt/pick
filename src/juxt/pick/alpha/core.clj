@@ -404,33 +404,46 @@
       ;; language-ordering applied.
       representation)))
 
+(defn deref-maybe [expr]
+  (if (instance? clojure.lang.IDeref expr) (deref expr) expr))
+
+(defn acceptable? [rep]
+  (pos?
+   (*
+    (get rep :juxt.pick/content-type-qvalue 1)
+    (get rep :juxt.pick/charset-qvalue 1)
+    (get rep :juxt.pick/encoding-qvalue 1)
+    (get rep :juxt.pick/language-qvalue 1))))
+
 (defn rate-representations [request-headers representations]
-  (map
+  (for [rep
+        (map
 
-   ;; Ordering of dimensions is as per description here:
-   ;; http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
+         ;; Ordering of dimensions is as per description here:
+         ;; http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
 
-   (comp
+         (comp
 
-    (assign-content-type-quality
-     (get request-headers "accept"))
+          (assign-content-type-quality
+           (deref-maybe (get request-headers "accept")))
 
-    (assign-language-quality
-     (get request-headers "accept-language"))
+          (assign-language-quality
+           (deref-maybe (get request-headers "accept-language")))
 
-    (assign-language-ordering
-     (get request-headers "accept-language"))
+          (assign-language-ordering
+           (deref-maybe (get request-headers "accept-language")))
 
-    (assign-encoding-quality
-     (get request-headers "accept-encoding"))
+          (assign-encoding-quality
+           (deref-maybe (get request-headers "accept-encoding")))
 
-    (assign-charset-quality
-     (get request-headers "accept-charset")))
+          (assign-charset-quality
+           (deref-maybe (get request-headers "accept-charset"))))
 
-   representations))
+         representations)]
+    (assoc rep :juxt.pick/acceptable? (acceptable? rep))))
 
 (defn segment-by
-  "Return a map containing a :variants entry containing a collection of
+  "Return a map containing a :representations entry containing a collection of
   representations which match the highest score, and :rejects containing a
   collection of representations with a lower score. The score is determined by
   the scorer function which is called with the representation as a single
@@ -448,14 +461,14 @@
          (comparator score max-score-so-far)
          (-> acc
              (assoc
-              :variants [representation]
+              :representations [representation]
               :max-score-so-far score)
-             (update :rejects into (:variants acc)))
+             (update :rejects into (:representations acc)))
 
          (= score max-score-so-far)
-         (update acc :variants conj representation)
+         (update acc :representations conj representation)
 
          :else
          (update acc :rejects conj representation))))
-   {:variants [] :rejects []}
+   {:representations [] :rejects []}
    representations))

@@ -42,7 +42,7 @@
               :juxt.pick/quality-of-source 0.8}
 
              ]})
-          (get-in [:juxt.pick/variants 0 :id])))
+          (get-in [:juxt.pick/representation :id])))
 
       "text/html" :html
       "TEXT/HTML" :html
@@ -63,6 +63,7 @@
       "application/json,application/edn;q=0.1" :json
       ))
 
+
 (deftest accept-encoding-test
   (are [accept-encoding-header variants expected]
       (=
@@ -73,22 +74,22 @@
                        (reap/accept-encoding
                         accept-encoding-header)}
                       :juxt.pick/representations variants})]
-         (vec
-          (for [v (:juxt.pick/variants actual)]
-            {:id (:id v)
-             :qvalue (:juxt.pick/encoding-qvalue v)}))))
+         (let [v (:juxt.pick/representation actual)]
+           {:id (:id v)
+            :qvalue (:juxt.pick/encoding-qvalue v)})))
 
       "gzip"
       [{:id :gzip
         ::rfc7231/content-encoding
         (reap/content-encoding "gzip")}]
-      [{:id :gzip :qvalue 1.0}]
+      {:id :gzip :qvalue 1.0}
+
 
       "deflate"
       [{:id :deflate-1
         ::rfc7231/content-encoding
         (reap/content-encoding "deflate")}]
-      [{:id :deflate-1 :qvalue 1.0}]
+      {:id :deflate-1 :qvalue 1.0}
 
       "gzip;q=0.8,deflate"
       [{:id :deflate-2
@@ -97,7 +98,7 @@
        {:id :gzip
         ::rfc7231/content-encoding
         (reap/content-encoding "gzip")}]
-      [{:id :deflate-2 :qvalue 1.0}]
+      {:id :deflate-2 :qvalue 1.0}
 
       ;; Pick first acceptable variant as per variant order, rather than
       ;; accept-encoding header order.
@@ -108,20 +109,20 @@
        {:id :gzip
         ::rfc7231/content-encoding
         (reap/content-encoding "gzip")}]
-      [{:id :deflate-3 :qvalue 1.0} {:id :gzip :qvalue 1.0}]
+      {:id :deflate-3 :qvalue 1.0}
 
       "gzip,deflate"
       [{:id :gzip-then-deflate
         ::rfc7231/content-encoding
         (reap/content-encoding "gzip,deflate")}]
-      [{:id :gzip-then-deflate :qvalue 1.0}]
+      {:id :gzip-then-deflate :qvalue 1.0}
 
       "gzip"
       [{:id :gzip-then-deflate
         ::rfc7231/content-encoding
         (reap/content-encoding "gzip,deflate")}
        {:id :identity}]
-      [{:id :identity :qvalue 1.0}]
+      {:id :identity :qvalue 1.0}
 
       ;; "If an Accept-Encoding header field is present in a request and none of
       ;; the available representations for the response have a content-coding
@@ -131,7 +132,7 @@
       [{:id :identity}
        {:id :gzip
         ::rfc7231/content-encoding (reap/content-encoding "gzip")}]
-      [{:id :identity :qvalue 1.0}]
+      {:id :identity :qvalue 1.0}
 
       ;; "If the Accept-Encoding field-value is empty, then only the "identity"
       ;; encoding is acceptable." -- RFC 2616
@@ -139,26 +140,8 @@
       [{:id :identity}
        {:id :gzip
         ::rfc7231/content-encoding (reap/content-encoding "gzip")}]
-      [{:id :identity :qvalue 1.0}]
+      {:id :identity :qvalue 1.0}
 
-      ;; As above, but if no identity encoding is acceptable we return a variant
-      ;; even if it is not acceptable (has a qvalue of 0). It is now up to the
-      ;; caller to return use the encoding in a 200 or return a 406 status.
-      ""
-      [{:id :gzip-1
-        ::rfc7231/content-encoding (reap/content-encoding "gzip")}]
-      [{:id :gzip-1 :qvalue 0.0}]
-
-      ;; As above, but return multiple (albeit unacceptable) representations and
-      ;; allow the caller to pick one, or return a status 300 or a status 406
-      ;; response.
-      ""
-      [{:id :gzip-2
-        ::rfc7231/content-encoding (reap/content-encoding "gzip")}
-       {:id :compress
-        ::rfc7231/content-encoding (reap/content-encoding "compress")}]
-      [{:id :gzip-2 :qvalue 0.0}
-       {:id :compress :qvalue 0.0}]
 
       ;; "If no Accept-Encoding field is in the request, any content-coding is
       ;; considered acceptable by the user agent."
@@ -167,8 +150,38 @@
         ::rfc7231/content-encoding (reap/content-encoding "gzip")}
        {:id :compress
         ::rfc7231/content-encoding (reap/content-encoding "compress")}]
-      [{:id :gzip-3 :qvalue 1.0}
-       {:id :compress :qvalue 1.0}]))
+      {:id :gzip-3 :qvalue 1.0})
+
+  ;; If no identity encoding is acceptable we return unacceptable representations
+  ;; in the :representations key. It is now up to the caller to return use the
+  ;; encoding in a 200 or return a 406 status.
+  (let [actual (apache-select-representation
+                {:juxt.pick/request-headers
+                 {"accept-encoding"
+                  (reap/accept-encoding
+                   "")}
+                 :juxt.pick/representations
+                 [{:id :gzip-1
+                   ::rfc7231/content-encoding (reap/content-encoding "gzip")}]})]
+    (is (= 1 (count (:juxt.pick/representations actual))))
+    (is (= false (:juxt.pick/acceptable? (first (:juxt.pick/representations actual))))))
+
+  ;; As above, but return multiple (albeit unacceptable) representations and
+  ;; allow the caller to pick one, or return a status 300 or a status 406
+  ;; response.
+  (let [actual (apache-select-representation
+                {:juxt.pick/request-headers
+                 {"accept-encoding"
+                  (reap/accept-encoding
+                   "")}
+                 :juxt.pick/representations
+                 [{:id :gzip-2
+                   ::rfc7231/content-encoding (reap/content-encoding "gzip")}
+                  {:id :compress
+                   ::rfc7231/content-encoding (reap/content-encoding "compress")}]})]
+    (is (= 2 (count (:juxt.pick/representations actual))))
+    (is (= false (:juxt.pick/acceptable? (first (:juxt.pick/representations actual)))))
+    (is (= false (:juxt.pick/acceptable? (second (:juxt.pick/representations actual)))))))
 
 (deftest accept-language-test
   (let [variants
@@ -196,7 +209,7 @@
              {:juxt.pick/request-headers
               {"accept-language" (reap/accept-language accept-language-header)}
               :juxt.pick/representations variants})
-            (get-in [:juxt.pick/variants 0 :content])))
+            (get-in [:juxt.pick/representation :content])))
         "en" "Hello!"
         "en-us" "Howdy!"
         "ar-eg" "ألسّلام عليكم"
@@ -223,7 +236,7 @@
            (-> (apache-select-representation
                 {:juxt.pick/request-headers {}
                  :juxt.pick/representations variants})
-               (get-in [:juxt.pick/variants 0 :content]))))))
+               (get-in [:juxt.pick/representation :content]))))))
 
 ;; Check only one language is chosen, and the order in the Accept-Language
 ;; header is used if necessary. We don't want multiple languages going into the
@@ -232,19 +245,17 @@
 ;; https://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm)
 (deftest single-language-selected
   (is
-   (= 1
-      (count
-       (:juxt.pick/variants
-        (apache-select-representation
-         {:juxt.pick/request-headers
-          {"accept-language" (reap/accept-language "en,fr,de")}
-          :juxt.pick/representations
-          [{:id :en
-            ::rfc7231/content-language (reap/content-language "en")}
-           {:id :fr
-            ::rfc7231/content-language (reap/content-language "fr")}
-           {:id :de
-            ::rfc7231/content-language (reap/content-language "de")}]}))))))
+   (:juxt.pick/representation
+    (apache-select-representation
+     {:juxt.pick/request-headers
+      {"accept-language" (reap/accept-language "en,fr,de")}
+      :juxt.pick/representations
+      [{:id :en
+        ::rfc7231/content-language (reap/content-language "en")}
+       {:id :fr
+        ::rfc7231/content-language (reap/content-language "fr")}
+       {:id :de
+        ::rfc7231/content-language (reap/content-language "de")}]}))))
 
 ;; Integration testing
 
@@ -260,7 +271,8 @@
        ::rfc7231/content-type (reap/content-type "text/plain")}]
      :juxt.pick/explain? false})))
 
-(deftest explain-test
+;; Awaiting a redesigned test-suite for juxt.pick/explain? and juxt.pick/vary?
+#_(deftest explain-test
   (let [request
         {"accept" (reap/accept "text/plain,text/html;q=0.1")
          "accept-encoding" (reap/accept-encoding "gzip;q=0.8,deflate")
