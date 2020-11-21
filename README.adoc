@@ -15,31 +15,38 @@ A variant is represented by data, for example:
 
 [source,clojure]
 ----
-{:juxt.http/content-type
-  {:juxt.http/type "text"
-   :juxt.http/subtype "html"
-   :juxt.http/parameter-map {"charset" "utf-8"}}
- :juxt.http/content-encoding
-   [{:juxt.http/content-coding "gzip"}]
- :juxt.http/content-language
-   {:juxt.http/langtag "en-US"}}
+{:juxt.pick.alpha/content-type "text/html;charset=utf-8"
+ :juxt.pick.alpha/content-encoding "gzip"
+ :juxt.pick.alpha/content-language "en-US"}
 ----
 
-You can use *pick* to select the variant that is most acceptable to the user agent. Here's how:
+You can use *pick* to select the representation that is most acceptable to the user agent.
+
+Here's how:
 
 [source,clojure]
 ----
 (require
-  '[juxt.pick.alpha.core :refer [pick]]
-  '[juxt.pick.alpha.apache :refer [using-apache-algo]])
+  '[juxt.pick.alpha.ring :as pick])
 
-(pick
-  using-apache-algo
-  {:juxt.http/request-headers {…}
-   :juxt.http/variants […]})
+(pick/pick
+  ;; A ring request (where headers indicate preferences)
+  {:request-method :get
+   :uri "/"
+   :headers {"accept" "text/html"
+             "accept-language" "de"}}
+  ;; Possible representations
+  [{:juxt.pick.alpha/content-type "text/html;charset=utf-8"
+    :juxt.pick.alpha/content-language "en"}
+
+   {:juxt.pick.alpha/content-type "text/html;charset=utf-8"
+    :juxt.pick.alpha/content-language "de"}
+
+   {:juxt.pick.alpha/content-type "text/plain;charset=utf-8"}])
+
 =>
-{:juxt.http/variants [{…}]; most acceptable variant(s)
- :juxt.http/vary […] ; request headers used in the determination
+{:juxt.pick.alpha/representaion {…} ; most acceptable representation
+ :juxt.pick.alpha/representaion […] ; all representations (scored)
 }
 
 ----
@@ -104,76 +111,6 @@ https://github.com/juxt/yada[yada]
 
 
 == Documentation
-
-NOTE: TBD
-
-=== Variants
-
-[source,clojure]
-----
-{:juxt.http/content-type
-  {:juxt.http/type "text"
-   :juxt.http/subtype "html"
-   :juxt.http/parameter-map {"charset" "utf-8"}}
- :juxt.http/content-encoding
-   [{:juxt.http/content-coding "gzip"}]
- :juxt.http/content-language
-   {:juxt.http/langtag "en-US"}}
-----
-
-=== Selecting a variant
-
-Use the `juxt.pick.alpha.core/pick` function, with the algorithm as
-the first argument.
-
-[source,clojure]
-----
-(require
-  '[juxt.pick.alpha.core :refer [pick]]
-  '[juxt.pick.alpha.apache :refer [using-apache-algo]])
-
-(pick
-  using-apache-algo
-  {:juxt.http/request-headers
-    {…}
-   :juxt.http/variants […]})
-=>
-{:juxt.http/variants [{…}]; most acceptable variant(s)
- :juxt.http/vary […] ; request headers used in the determination
-}
-----
-
-[TIP]
---
-If you prefer to specify these values as string literals, use our https://github.com/juxt/reap[reap] library.
-
-[source,clojure]
-----
-(require '[juxt.reap.alpha.decoders :as reap]
-
-{:juxt.http/content-type (reap/content-type "text/html;charset=utf-8")
- :juxt.http/content-encoding (reap/content-encoding "gzip,deflate")
- :juxt.http/content-language (reap/content-language "en-US")
-}
-----
-
---
-
-NOTE: Document the argument map
-
-=== Media-types
-
-NOTE: TBD
-
-=== Charsets
-
-NOTE: TBD
-
-=== Encodings
-
-NOTE: TBD
-
-=== Languages
 
 NOTE: TBD
 
