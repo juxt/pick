@@ -401,11 +401,6 @@
       ;; language-ordering applied.
       representation)))
 
-
-
-(defn deref-maybe [expr]
-  (if (instance? clojure.lang.IDeref expr) (deref expr) expr))
-
 (defn acceptable? [rep]
   (pos?
    (*
@@ -424,19 +419,19 @@
          (comp
 
           (assign-content-type-quality
-           (deref-maybe (get request-headers "accept")))
+           (force (get request-headers "accept")))
 
           (assign-language-quality
-           (deref-maybe (get request-headers "accept-language")))
+           (force (get request-headers "accept-language")))
 
           (assign-language-ordering
-           (deref-maybe (get request-headers "accept-language")))
+           (force (get request-headers "accept-language")))
 
           (assign-encoding-quality
-           (deref-maybe (get request-headers "accept-encoding")))
+           (force (get request-headers "accept-encoding")))
 
           (assign-charset-quality
-           (deref-maybe (get request-headers "accept-charset"))))
+           (force (get request-headers "accept-charset"))))
 
          representations)]
     (assoc rep :juxt.pick/acceptable? (acceptable? rep))))
