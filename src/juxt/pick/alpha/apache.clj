@@ -3,8 +3,7 @@
 (ns juxt.pick.alpha.apache
   (:require
    [juxt.pick.alpha.core
-    :refer [rate-representations segment-by]]
-   [juxt.reap.alpha.rfc7231 :as rfc7231]))
+    :refer [rate-representations segment-by]]))
 
 ;; An implementation in Clojure of Apache's httpd Negotiation Algorithm:
 ;; http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
@@ -105,7 +104,7 @@
 
         ;; "If the Accept* header for any dimension implies that this variant is
         ;; not acceptable, eliminate it."
-        {acceptable true not-acceptable false}
+        {acceptable true _ false}
         (group-by :juxt.pick/acceptable? rated-representations)
 
         reductions
@@ -147,13 +146,13 @@
         vary?
         (conj [:juxt.pick/vary
                (cond-> []
-                 (> (count (distinct (keep ::rfc7231/content-type representations))) 1)
+                 (> (count (distinct (keep :juxt.reap.alpha.rfc7231/content-type representations))) 1)
                  (conj "accept")
-                 (> (count (distinct (keep ::rfc7231/content-encoding representations))) 1)
+                 (> (count (distinct (keep :juxt.reap.alpha.rfc7231/content-encoding representations))) 1)
                  (conj "accept-encoding")
-                 (> (count (distinct (keep ::rfc7231/content-language representations))) 1)
+                 (> (count (distinct (keep :juxt.reap.alpha.rfc7231/content-language representations))) 1)
                  (conj "accept-language")
-                 (> (count (distinct (keep (comp #(get % "charset") ::rfc7231/parameter-map ::rfc7231/content-type) representations))) 1)
+                 (> (count (distinct (keep (comp #(get % "charset") :juxt.reap.alpha.rfc7231/parameter-map :juxt.reap.alpha.rfc7231/content-type) representations))) 1)
                  (conj "accept-charset"))])
 
         explain? (conj [:juxt.pick/rejects

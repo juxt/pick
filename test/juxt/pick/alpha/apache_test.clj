@@ -2,7 +2,7 @@
 
 (ns juxt.pick.alpha.apache-test
   (:require
-   [clojure.test :refer [deftest is are testing]]
+   [clojure.test :refer [deftest is are]]
    [juxt.pick.alpha.apache :refer [apache-select-representation]]
    [juxt.reap.alpha.decoders :as reap]
    [juxt.reap.alpha.rfc7231 :as rfc7231]))
@@ -74,9 +74,8 @@
                        (reap/accept-encoding
                         accept-encoding-header)}
                       :juxt.pick/representations variants})]
-         (let [v (:juxt.pick/representation actual)]
-           {:id (:id v)
-            :qvalue (:juxt.pick/encoding-qvalue v)})))
+         {:id (:id (:juxt.pick/representation actual))
+          :qvalue (:juxt.pick/encoding-qvalue (:juxt.pick/representation actual))}))
 
       "gzip"
       [{:id :gzip
