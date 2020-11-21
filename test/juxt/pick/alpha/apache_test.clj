@@ -13,9 +13,9 @@
       (= expected-content
          (->
           (apache-select-representation
-           {:juxt.pick/request-headers
+           {:juxt.pick.alpha/request-headers
             {"accept" (reap/accept accept-header)}
-            :juxt.pick/representations
+            :juxt.pick.alpha/representations
             [{:id :html
               :content "<h1>Hello World!</h1>"
               ::rfc7231/content-type
@@ -34,15 +34,15 @@
              {:id :edn
               ::rfc7231/content-type
               (reap/content-type "application/edn")
-              :juxt.pick/quality-of-source 1.0}
+              :juxt.pick.alpha/quality-of-source 1.0}
 
              {:id :json
               ::rfc7231/content-type
               (reap/content-type "application/json")
-              :juxt.pick/quality-of-source 0.8}
+              :juxt.pick.alpha/quality-of-source 0.8}
 
              ]})
-          (get-in [:juxt.pick/representation :id])))
+          (get-in [:juxt.pick.alpha/representation :id])))
 
       "text/html" :html
       "TEXT/HTML" :html
@@ -57,7 +57,7 @@
       "application/edn" :edn
       "application/json" :json
       "application/json,application/edn" :edn
-      ;; We still get EDN here because of the :juxt.pick/quality-of-source
+      ;; We still get EDN here because of the :juxt.pick.alpha/quality-of-source
       ;; mulitplier
       "application/json,application/edn;q=0.9" :edn
       "application/json,application/edn;q=0.1" :json
@@ -69,13 +69,13 @@
       (=
        expected
        (let [actual (apache-select-representation
-                     {:juxt.pick/request-headers
+                     {:juxt.pick.alpha/request-headers
                       {"accept-encoding"
                        (reap/accept-encoding
                         accept-encoding-header)}
-                      :juxt.pick/representations variants})]
-         {:id (:id (:juxt.pick/representation actual))
-          :qvalue (:juxt.pick/encoding-qvalue (:juxt.pick/representation actual))}))
+                      :juxt.pick.alpha/representations variants})]
+         {:id (:id (:juxt.pick.alpha/representation actual))
+          :qvalue (:juxt.pick.alpha/encoding-qvalue (:juxt.pick.alpha/representation actual))}))
 
       "gzip"
       [{:id :gzip
@@ -155,32 +155,32 @@
   ;; in the :representations key. It is now up to the caller to return use the
   ;; encoding in a 200 or return a 406 status.
   (let [actual (apache-select-representation
-                {:juxt.pick/request-headers
+                {:juxt.pick.alpha/request-headers
                  {"accept-encoding"
                   (reap/accept-encoding
                    "")}
-                 :juxt.pick/representations
+                 :juxt.pick.alpha/representations
                  [{:id :gzip-1
                    ::rfc7231/content-encoding (reap/content-encoding "gzip")}]})]
-    (is (= 1 (count (:juxt.pick/representations actual))))
-    (is (= false (:juxt.pick/acceptable? (first (:juxt.pick/representations actual))))))
+    (is (= 1 (count (:juxt.pick.alpha/representations actual))))
+    (is (= false (:juxt.pick.alpha/acceptable? (first (:juxt.pick.alpha/representations actual))))))
 
   ;; As above, but return multiple (albeit unacceptable) representations and
   ;; allow the caller to pick one, or return a status 300 or a status 406
   ;; response.
   (let [actual (apache-select-representation
-                {:juxt.pick/request-headers
+                {:juxt.pick.alpha/request-headers
                  {"accept-encoding"
                   (reap/accept-encoding
                    "")}
-                 :juxt.pick/representations
+                 :juxt.pick.alpha/representations
                  [{:id :gzip-2
                    ::rfc7231/content-encoding (reap/content-encoding "gzip")}
                   {:id :compress
                    ::rfc7231/content-encoding (reap/content-encoding "compress")}]})]
-    (is (= 2 (count (:juxt.pick/representations actual))))
-    (is (= false (:juxt.pick/acceptable? (first (:juxt.pick/representations actual)))))
-    (is (= false (:juxt.pick/acceptable? (second (:juxt.pick/representations actual)))))))
+    (is (= 2 (count (:juxt.pick.alpha/representations actual))))
+    (is (= false (:juxt.pick.alpha/acceptable? (first (:juxt.pick.alpha/representations actual)))))
+    (is (= false (:juxt.pick.alpha/acceptable? (second (:juxt.pick.alpha/representations actual)))))))
 
 (deftest accept-language-test
   (let [variants
@@ -205,10 +205,10 @@
         (= expected-greeting
            (->
             (apache-select-representation
-             {:juxt.pick/request-headers
+             {:juxt.pick.alpha/request-headers
               {"accept-language" (reap/accept-language accept-language-header)}
-              :juxt.pick/representations variants})
-            (get-in [:juxt.pick/representation :content])))
+              :juxt.pick.alpha/representations variants})
+            (get-in [:juxt.pick.alpha/representation :content])))
         "en" "Hello!"
         "en-us" "Howdy!"
         "ar-eg" "ألسّلام عليكم"
@@ -233,9 +233,9 @@
     ;; If no Accept-Language header, just pick the first variant.
     (is (= "Hello!"
            (-> (apache-select-representation
-                {:juxt.pick/request-headers {}
-                 :juxt.pick/representations variants})
-               (get-in [:juxt.pick/representation :content]))))))
+                {:juxt.pick.alpha/request-headers {}
+                 :juxt.pick.alpha/representations variants})
+               (get-in [:juxt.pick.alpha/representation :content]))))))
 
 ;; Check only one language is chosen, and the order in the Accept-Language
 ;; header is used if necessary. We don't want multiple languages going into the
@@ -244,11 +244,11 @@
 ;; https://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm)
 (deftest single-language-selected
   (is
-   (:juxt.pick/representation
+   (:juxt.pick.alpha/representation
     (apache-select-representation
-     {:juxt.pick/request-headers
+     {:juxt.pick.alpha/request-headers
       {"accept-language" (reap/accept-language "en,fr,de")}
-      :juxt.pick/representations
+      :juxt.pick.alpha/representations
       [{:id :en
         ::rfc7231/content-language (reap/content-language "en")}
        {:id :fr
@@ -261,16 +261,16 @@
 (deftest integration-test
   (is
    (apache-select-representation
-    {:juxt.pick/request
+    {:juxt.pick.alpha/request
      {"accept" (reap/accept "text/html")}
-     :juxt.pick/representations
+     :juxt.pick.alpha/representations
      [{:id :html
        ::rfc7231/content-type (reap/content-type "text/html")}
       {:id :plain
        ::rfc7231/content-type (reap/content-type "text/plain")}]
-     :juxt.pick/explain? false})))
+     :juxt.pick.alpha/explain? false})))
 
-;; Awaiting a redesigned test-suite for juxt.pick/explain? and juxt.pick/vary?
+;; Awaiting a redesigned test-suite for juxt.pick.alpha/explain? and juxt.pick.alpha/vary?
 #_(deftest explain-test
   (let [request
         {"accept" (reap/accept "text/plain,text/html;q=0.1")
@@ -309,30 +309,30 @@
 
         select-explain
         (apache-select-representation
-         {:juxt.pick/request request
-          :juxt.pick/representations variants
-          :juxt.pick/explain? true})
+         {:juxt.pick.alpha/request request
+          :juxt.pick.alpha/representations variants
+          :juxt.pick.alpha/explain? true})
 
         explain
-        (:juxt.pick/explain select-explain)]
+        (:juxt.pick.alpha/explain select-explain)]
 
     (testing "disable explain"
       (is
        (nil?
         (find
          (apache-select-representation
-          {:juxt.pick/request request
-           :juxt.pick/representations variants
-           :juxt.pick/explain? false})
-         :juxt.pick/explain))))
+          {:juxt.pick.alpha/request request
+           :juxt.pick.alpha/representations variants
+           :juxt.pick.alpha/explain? false})
+         :juxt.pick.alpha/explain))))
 
     (testing "no explain by default"
       (is
        (nil?
         (find
          (apache-select-representation
-          {:juxt.pick/request request
-           :juxt.pick/representations variants})
-         :juxt.pick/explain))))
+          {:juxt.pick.alpha/request request
+           :juxt.pick.alpha/representations variants})
+         :juxt.pick.alpha/explain))))
 
     (testing (is (map? explain)))))

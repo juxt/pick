@@ -7,18 +7,18 @@
 
 (deftest api-test
   (let [variants
-        [{:juxt.pick/content-type "text/html;charset=utf-8"
-          :juxt.pick/content-language "en"}
+        [{:juxt.pick.alpha/content-type "text/html;charset=utf-8"
+          :juxt.pick.alpha/content-language "en"}
 
-         {:juxt.pick/content-type "text/html;charset=utf-8"
-          :juxt.pick/content-language "de"}
+         {:juxt.pick.alpha/content-type "text/html;charset=utf-8"
+          :juxt.pick.alpha/content-language "de"}
 
-         {:juxt.pick/content-type "text/plain;charset=utf-8"}]]
+         {:juxt.pick.alpha/content-type "text/plain;charset=utf-8"}]]
     (is
      (=
       "en"
-      (:juxt.pick/content-language
-       (:juxt.pick/representation
+      (:juxt.pick.alpha/content-language
+       (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
           :uri "/"
@@ -29,8 +29,8 @@
     (is
      (=
       "de"
-      (:juxt.pick/content-language
-       (:juxt.pick/representation
+      (:juxt.pick.alpha/content-language
+       (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
           :uri "/"
@@ -40,7 +40,7 @@
 
     (is
      (nil?
-      (:juxt.pick/representation
+      (:juxt.pick.alpha/representation
        (pick/pick
         {:request-method :get
          :uri "/"
@@ -51,8 +51,8 @@
     (is
      (=
       "en"
-      (:juxt.pick/content-language
-       (:juxt.pick/representation
+      (:juxt.pick.alpha/content-language
+       (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
           :uri "/"
@@ -63,8 +63,8 @@
     (is
      (=
       "text/plain;charset=utf-8"
-      (:juxt.pick/content-type
-       (:juxt.pick/representation
+      (:juxt.pick.alpha/content-type
+       (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
           :uri "/"
@@ -74,8 +74,8 @@
     (is
      (=
       "text/html;charset=utf-8"
-      (:juxt.pick/content-type
-       (:juxt.pick/representation
+      (:juxt.pick.alpha/content-type
+       (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
           :uri "/"
@@ -85,8 +85,8 @@
     (is
      (=
       "text/plain;charset=utf-8"
-      (:juxt.pick/content-type
-       (:juxt.pick/representation
+      (:juxt.pick.alpha/content-type
+       (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
           :uri "/"
@@ -96,8 +96,8 @@
     (is
      (=
       "text/plain;charset=utf-8"
-      (:juxt.pick/content-type
-       (:juxt.pick/representation
+      (:juxt.pick.alpha/content-type
+       (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
           :uri "/"
@@ -107,10 +107,10 @@
     (is
      (=
       ["accept" "accept-language"]
-      (:juxt.pick/vary
+      (:juxt.pick.alpha/vary
        (pick/pick
         {:request-method :get
          :uri "/"
          :headers {"accept" "text/html"}}
         variants
-        {:juxt.pick/vary? true}))))))
+        {:juxt.pick.alpha/vary? true}))))))

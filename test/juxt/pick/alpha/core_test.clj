@@ -150,7 +150,7 @@
         (=
          expected
          (map
-          (juxt :id (comp round :juxt.pick/encoding-qvalue))
+          (juxt :id (comp round :juxt.pick.alpha/encoding-qvalue))
           (map
            (assign-encoding-quality
             (rdec/accept-encoding
@@ -349,7 +349,7 @@
         (=
          expected
          (map
-          (juxt :id (comp round :juxt.pick/language-qvalue))
+          (juxt :id (comp round :juxt.pick.alpha/language-qvalue))
           (map
            (assign-language-quality
             (rdec/accept-language accept-language-header))
@@ -410,7 +410,7 @@
         (=
          expected
          (map
-          (juxt :id :juxt.pick/language-ordering-weight)
+          (juxt :id :juxt.pick.alpha/language-ordering-weight)
           (map
            (assign-language-ordering
             (rdec/accept-language accept-language-header))
