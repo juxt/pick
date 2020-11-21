@@ -1,10 +1,10 @@
 ;; Copyright © 2020, JUXT LTD.
 
-(ns juxt.pick.alpha.api
+(ns juxt.pick.alpha.ring
   (:require
    [juxt.reap.alpha.regex :as re]
+   [juxt.reap.alpha.ring :as reap.ring]
    [juxt.pick.alpha.apache :refer [apache-select-representation]]
-   [juxt.reap.alpha.ring :as ring]
    [juxt.reap.alpha.decoders.rfc7231 :as rfc7231]))
 
 (def content-type (rfc7231/content-type {}))
@@ -26,6 +26,6 @@
   ([request representations opts]
    (apache-select-representation
     (into
-     {:juxt.pick.alpha/request-headers (ring/request->decoded-preferences request)
+     {:juxt.pick.alpha/request-headers (reap.ring/request->decoded-preferences request)
       :juxt.pick.alpha/representations (map decode-maybe representations)}
      opts))))

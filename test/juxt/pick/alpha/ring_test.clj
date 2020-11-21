@@ -1,8 +1,8 @@
 ;; Copyright © 2020, JUXT LTD.
 
-(ns juxt.pick.alpha.api-test
+(ns juxt.pick.alpha.ring-test
   (:require
-   [juxt.pick.alpha.api :as pick]
+   [juxt.pick.alpha.ring :as pick]
    [clojure.test :refer [deftest is]]))
 
 (deftest api-test
