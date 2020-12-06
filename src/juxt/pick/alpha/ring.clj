@@ -13,12 +13,12 @@
 
 (defn decode-maybe [r]
   (cond-> r
-    (and (:juxt.pick.alpha/content-type r) (not (:juxt.reap.alpha.rfc7231/content-type r)))
-    (conj [:juxt.reap.alpha.rfc7231/content-type (content-type (re/input (:juxt.pick.alpha/content-type r)))])
-    (and (:juxt.pick.alpha/content-language r) (not (:juxt.reap.alpha.rfc7231/content-language r)))
-    (conj [:juxt.reap.alpha.rfc7231/content-language (content-language (re/input (:juxt.pick.alpha/content-language r)))])
-    (and (:juxt.pick.alpha/content-encoding r) (not (:juxt.reap.alpha.rfc7231/content-encoding r)))
-    (conj [:juxt.reap.alpha.rfc7231/content-encoding (content-encoding (re/input (:juxt.pick.alpha/content-encoding r)))])))
+    (and (get r "content-type") (not (:juxt.reap.alpha.rfc7231/content-type r)))
+    (conj [:juxt.reap.alpha.rfc7231/content-type (content-type (re/input (get r "content-type")))])
+    (and (get r "content-language") (not (:juxt.reap.alpha.rfc7231/content-language r)))
+    (conj [:juxt.reap.alpha.rfc7231/content-language (content-language (re/input (get r "content-language")))])
+    (and (get r "content-encoding") (not (:juxt.reap.alpha.rfc7231/content-encoding r)))
+    (conj [:juxt.reap.alpha.rfc7231/content-encoding (content-encoding (re/input (get r "content-encoding")))])))
 
 (defn pick
   ([request representations]

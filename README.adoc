@@ -36,13 +36,13 @@ Here's how:
    :headers {"accept" "text/html"
              "accept-language" "de"}}
   ;; Possible representations
-  [{:juxt.pick.alpha/content-type "text/html;charset=utf-8"
-    :juxt.pick.alpha/content-language "en"}
+  [{"content-type" "text/html;charset=utf-8"
+    "content-language" "en"}
 
-   {:juxt.pick.alpha/content-type "text/html;charset=utf-8"
-    :juxt.pick.alpha/content-language "de"}
+   {"content-type" "text/html;charset=utf-8"
+    "content-language" "de"}
 
-   {:juxt.pick.alpha/content-type "text/plain;charset=utf-8"}])
+   {"content-type" "text/plain;charset=utf-8"}])
 
 =>
 {:juxt.pick.alpha/representaion {…} ; most acceptable representation
