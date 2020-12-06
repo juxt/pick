@@ -15,9 +15,9 @@ A variant is represented by data, for example:
 
 [source,clojure]
 ----
-{:juxt.pick.alpha/content-type "text/html;charset=utf-8"
- :juxt.pick.alpha/content-encoding "gzip"
- :juxt.pick.alpha/content-language "en-US"}
+{"content-type" "text/html;charset=utf-8"
+ "content-encoding" "gzip"
+ "content-language" "en-US"}
 ----
 
 You can use *pick* to select the representation that is most acceptable to the user agent.
@@ -45,8 +45,8 @@ Here's how:
    {"content-type" "text/plain;charset=utf-8"}])
 
 =>
-{:juxt.pick.alpha/representaion {…} ; most acceptable representation
- :juxt.pick.alpha/representaion […] ; all representations (scored)
+{:juxt.pick.alpha/representation {…} ; most acceptable representation
+ :juxt.pick.alpha/representations […] ; all representations (scored)
 }
 
 ----
