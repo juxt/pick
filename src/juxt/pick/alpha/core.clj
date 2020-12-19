@@ -17,7 +17,7 @@
         (recur accept-entries))
       true)))
 
-(defn- content-type-match?
+(defn content-type-match?
   "Return truthy if the given accept-field (reap format) accepts the given
   content-type (reap format). The return value is a the precedence value (if
   matched), nil otherwise."
@@ -409,14 +409,9 @@
     (get rep :juxt.pick.alpha/encoding-qvalue 1)
     (get rep :juxt.pick.alpha/language-qvalue 1))))
 
-(defn rate-representations [request-headers representations]
-  (for [rep
-        (map
-
-         ;; Ordering of dimensions is as per description here:
-         ;; http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
-
-         (comp
+(defn rate-representation [request-headers representation]
+  (let [rep
+        ((comp
 
           (assign-content-type-quality
            (force (get request-headers "accept")))
@@ -433,8 +428,11 @@
           (assign-charset-quality
            (force (get request-headers "accept-charset"))))
 
-         representations)]
+         representation)]
     (assoc rep :juxt.pick.alpha/acceptable? (acceptable? rep))))
+
+(defn rate-representations [request-headers representations]
+  (map #(rate-representation request-headers %) representations))
 
 (defn segment-by
   "Return a map containing a :representations entry containing a collection of
