@@ -26,6 +26,6 @@
   ([request representations opts]
    (apache-select-representation
     (into
-     {:juxt.pick.alpha/request-headers (reap.ring/request->decoded-preferences request)
+     {:juxt.pick.alpha/request-headers (reap.ring/headers->decoded-preferences (:headers request))
       :juxt.pick.alpha/representations (map decode-maybe representations)}
      opts))))
