@@ -176,7 +176,7 @@
    (fn [acc {accept-coding :juxt.reap.alpha.rfc7231/codings :as field}]
 
      (cond
-       (= accept-coding (get entry :juxt.reap.alpha.rfc7231/content-coding "identity"))
+       (.equalsIgnoreCase accept-coding (get entry :juxt.reap.alpha.rfc7231/content-coding "identity"))
        (cond-> acc
          (< (get acc :precedence) 2)
          (conj [:qvalue (get field :juxt.reap.alpha.rfc7231/qvalue 1.0)]

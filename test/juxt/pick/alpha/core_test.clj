@@ -280,7 +280,15 @@
                     [:deflate 0.0]
                     [:gzip-then-deflate 0.0]
                     [:identity 0.0]
-                    [:unspecified 0.0]])))
+                    [:unspecified 0.0]]
+
+      ;; "All content-coding values are case-insensitive" -- Section 3.1.2.1,
+      ;; RFC 7231
+      "DEFLATE,GZIP" [[:gzip 1.0]
+                      [:deflate 1.0]
+                      [:gzip-then-deflate 1.0]
+                      [:identity 1.0]
+                      [:unspecified 1.0]])))
 
 ;; See RFC 7231 Section 5.3.5: Accept-Language
 
