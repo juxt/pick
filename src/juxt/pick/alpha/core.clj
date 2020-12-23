@@ -409,30 +409,34 @@
     (get rep :juxt.pick.alpha/encoding-qvalue 1)
     (get rep :juxt.pick.alpha/language-qvalue 1))))
 
-(defn rate-representation [request-headers representation]
+(defn rate-representation
+  "Given a map of accept headers (with reap-parsed values), and a (reap-parsed)
+  representation, return the representation augmented with quality scores for
+  each axis of negotiation."
+  [accept-declarations representation]
   (let [rep
         ((comp
 
           (assign-content-type-quality
-           (force (get request-headers "accept")))
+           (force (get accept-declarations "accept")))
 
           (assign-language-quality
-           (force (get request-headers "accept-language")))
+           (force (get accept-declarations "accept-language")))
 
           (assign-language-ordering
-           (force (get request-headers "accept-language")))
+           (force (get accept-declarations "accept-language")))
 
           (assign-encoding-quality
-           (force (get request-headers "accept-encoding")))
+           (force (get accept-declarations "accept-encoding")))
 
           (assign-charset-quality
-           (force (get request-headers "accept-charset"))))
+           (force (get accept-declarations "accept-charset"))))
 
          representation)]
     (assoc rep :juxt.pick.alpha/acceptable? (acceptable? rep))))
 
-(defn rate-representations [request-headers representations]
-  (map #(rate-representation request-headers %) representations))
+(defn rate-representations [accept-declarations representations]
+  (map #(rate-representation accept-declarations %) representations))
 
 (defn segment-by
   "Return a map containing a :representations entry containing a collection of
