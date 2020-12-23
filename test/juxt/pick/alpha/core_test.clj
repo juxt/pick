@@ -302,6 +302,16 @@
      (:juxt.reap.alpha.rfc4647/language-range (first (rdec/accept-language "de-de")))
      (:juxt.reap.alpha.rfc5646/langtag (first (rdec/content-language "de-Latn-DE"))))))
 
+  ;; "At all times, language tags and their subtags, including private use and
+  ;; extensions, are to be treated as case insensitive: there exist conventions
+  ;; for the capitalization of some of the subtags, but these MUST NOT be taken
+  ;; to carry meaning." -- Section 2.1.1, RFC 5646
+  (is
+   (not
+    (basic-language-match?
+     (:juxt.reap.alpha.rfc4647/language-range (first (rdec/accept-language "de-de")))
+     (:juxt.reap.alpha.rfc5646/langtag (first (rdec/content-language "DE-LATN-DE"))))))
+
   (is
    (not
     (basic-language-match?
