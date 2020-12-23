@@ -125,11 +125,12 @@
 (defn acceptable-charset-quality
   "(charset cannot be nil)"
   [parsed-accept-charset-header charset]
+  (assert (string? charset) "charset must be a non-nil string")
   (if (seq parsed-accept-charset-header)
     (reduce
      (fn [acc field]
        (cond
-         (= charset (:juxt.reap.alpha.rfc7231/charset field))
+         (.equalsIgnoreCase charset (:juxt.reap.alpha.rfc7231/charset field))
          (cond-> acc
            (< (get acc :precedence) 2)
            (conj [:qvalue (get field :juxt.reap.alpha.rfc7231/qvalue 1.0)]

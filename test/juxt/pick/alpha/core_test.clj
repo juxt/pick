@@ -101,7 +101,13 @@
 
     "iso-8859-5, unicode-1-1;q=0.8,*"
     "utf-8"
-    {:qvalue 1.0 :precedence 1}))
+    {:qvalue 1.0 :precedence 1}
+
+    ;; "A charset is identified by a case-insensitive token." -- Section 3.1.1.2
+    ;; of RFC 7231
+    "utf-8"
+    "UTF-8"
+    {:qvalue 1.0 :precedence 2}))
 
 ;; See RFC 7231 Section 5.3.4: Accept-Encoding
 
