@@ -51,7 +51,7 @@
       "text/plain" :plain-text
       "text/html;q=0.8,text/plain" :plain-text
 
-      "TEXT/HTML;level=2;text/html;q=0.8" :html-level-2
+      "TEXT/HTML;level=2,text/html;q=0.8" :html-level-2
 
       ;; Quality for source tests
       "application/edn" :edn
@@ -60,9 +60,7 @@
       ;; We still get EDN here because of the :juxt.pick.alpha/quality-of-source
       ;; mulitplier
       "application/json,application/edn;q=0.9" :edn
-      "application/json,application/edn;q=0.1" :json
-      ))
-
+      "application/json,application/edn;q=0.1" :json))
 
 (deftest accept-encoding-test
   (are [accept-encoding-header variants expected]
@@ -141,15 +139,21 @@
         ::rfc7231/content-encoding (reap/content-encoding "gzip")}]
       {:id :identity :qvalue 1.0}
 
+      )
 
-      ;; "If no Accept-Encoding field is in the request, any content-coding is
-      ;; considered acceptable by the user agent."
-      nil
-      [{:id :gzip-3
-        ::rfc7231/content-encoding (reap/content-encoding "gzip")}
-       {:id :compress
-        ::rfc7231/content-encoding (reap/content-encoding "compress")}]
-      {:id :gzip-3 :qvalue 1.0})
+  ;; "If no Accept-Encoding field is in the request, any content-coding is
+  ;; considered acceptable by the user agent."
+  (let [actual (apache-select-representation
+                {:juxt.pick.alpha/request-headers
+                 {}
+                 :juxt.pick.alpha/representations
+                 [{:id :gzip-3
+                   ::rfc7231/content-encoding (reap/content-encoding "gzip")}
+                  {:id :compress
+                   ::rfc7231/content-encoding (reap/content-encoding "compress")}]})]
+
+    (is (= :gzip-3 (:id (:juxt.pick.alpha/representation actual))))
+    (is (= 1.0 (:juxt.pick.alpha/encoding-qvalue (:juxt.pick.alpha/representation actual)))))
 
   ;; If no identity encoding is acceptable we return unacceptable representations
   ;; in the :representations key. It is now up to the caller to return use the

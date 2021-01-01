@@ -428,7 +428,10 @@
            (force (get accept-declarations "accept-language")))
 
           (assign-encoding-quality
-           (force (get accept-declarations "accept-encoding")))
+           (or
+            (force (get accept-declarations "accept-encoding"))
+            (when (contains? accept-declarations "accept-encoding")
+              [])))
 
           (assign-charset-quality
            (force (get accept-declarations "accept-charset"))))

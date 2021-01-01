@@ -128,7 +128,7 @@
     ;; determine the total qvalue with multiplication.
     "gzip" "gzip,deflate" 0.0
     "deflate" "gzip,deflate" 0.0
-    "gzip;q=0.9,deflate;q=0.5;compress;q=0.2" "gzip,deflate" 0.45
+    "gzip;q=0.9,deflate;q=0.5,compress;q=0.2" "gzip,deflate" 0.45
     "gzip;q=0.4,deflate;q=0.5,compress;q=0.2" "gzip,deflate,compress" 0.04))
 
 (deftest assign-encoding-quality-test
