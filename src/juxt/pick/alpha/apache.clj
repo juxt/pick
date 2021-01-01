@@ -104,8 +104,8 @@
 
         ;; "If the Accept* header for any dimension implies that this variant is
         ;; not acceptable, eliminate it."
-        {acceptable true _ false}
-        (group-by :juxt.pick.alpha/acceptable? rated-representations)
+        acceptable
+        (filter :juxt.pick.alpha/acceptable? rated-representations)
 
         reductions
         (reductions
