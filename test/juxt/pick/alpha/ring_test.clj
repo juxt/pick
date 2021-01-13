@@ -121,3 +121,14 @@
          :headers {"accept" "text/html"}}
         variants
         {:juxt.pick.alpha/vary? true}))))))
+
+(deftest malformed-content-type-test
+  (is
+   (thrown-with-msg?
+    clojure.lang.ExceptionInfo
+    #"Malformed content-type"
+    (pick/pick
+     {:request-method :get
+      :uri "/"
+      :headers {"accept" "text/html"}}
+     [{"content-type" "texthtml"}]))))

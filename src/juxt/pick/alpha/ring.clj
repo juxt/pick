@@ -14,11 +14,20 @@
 (defn decode-maybe [r]
   (cond-> r
     (and (get r "content-type") (not (:juxt.reap.alpha.rfc7231/content-type r)))
-    (conj [:juxt.reap.alpha.rfc7231/content-type (content-type (re/input (get r "content-type")))])
+    (assoc :juxt.reap.alpha.rfc7231/content-type
+           (or
+            (content-type (re/input (get r "content-type")))
+            (throw (ex-info "Malformed content-type" {:input (get r "content-type")}))))
     (and (get r "content-language") (not (:juxt.reap.alpha.rfc7231/content-language r)))
-    (conj [:juxt.reap.alpha.rfc7231/content-language (content-language (re/input (get r "content-language")))])
+    (assoc :juxt.reap.alpha.rfc7231/content-language
+           (or
+            (content-language (re/input (get r "content-language")))
+            (throw (ex-info "Malformed content-language" {:input (get r "content-language")}))))
     (and (get r "content-encoding") (not (:juxt.reap.alpha.rfc7231/content-encoding r)))
-    (conj [:juxt.reap.alpha.rfc7231/content-encoding (content-encoding (re/input (get r "content-encoding")))])))
+    (assoc :juxt.reap.alpha.rfc7231/content-encoding
+           (or
+            (content-encoding (re/input (get r "content-encoding")))
+            (throw (ex-info "Malformed content-encoding" {:input (get r "content-encoding")}))))))
 
 (defn pick
   ([request representations]
