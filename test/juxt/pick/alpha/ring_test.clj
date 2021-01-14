@@ -7,17 +7,20 @@
 
 (deftest api-test
   (let [variants
-        [{"content-type" "text/html;charset=utf-8"
-          "content-language" "en"}
+        [{:juxt.pick.alpha/representation-metadata
+          {"content-type" "text/html;charset=utf-8"
+           "content-language" "en"}}
 
-         {"content-type" "text/html;charset=utf-8"
-          "content-language" "de"}
+         {:juxt.pick.alpha/representation-metadata
+          {"content-type" "text/html;charset=utf-8"
+           "content-language" "de"}}
 
-         {"content-type" "text/plain;charset=utf-8"}]]
+         {:juxt.pick.alpha/representation-metadata
+          {"content-type" "text/plain;charset=utf-8"}}]]
     (is
      (=
       "en"
-      (get
+      (get-in
        (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
@@ -25,12 +28,12 @@
           :headers {"accept" "text/html"
                     "accept-language" "en, de, es"}}
          variants))
-       "content-language")))
+       [:juxt.pick.alpha/representation-metadata "content-language"])))
 
     (is
      (=
       "de"
-      (get
+      (get-in
        (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
@@ -38,7 +41,7 @@
           :headers {"accept" "text/html"
                     "accept-language" "de"}}
          variants))
-       "content-language")))
+       [:juxt.pick.alpha/representation-metadata "content-language"])))
 
     (is
      (nil?
@@ -53,7 +56,7 @@
     (is
      (=
       "en"
-      (get
+      (get-in
        (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
@@ -61,55 +64,55 @@
           :headers {"accept" "text/html"
                     "accept-language" "es, en"}}
          variants))
-       "content-language")))
+       [:juxt.pick.alpha/representation-metadata "content-language"])))
 
     (is
      (=
       "text/plain;charset=utf-8"
-      (get
+      (get-in
        (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
           :uri "/"
           :headers {"accept" "text/plain"}}
          variants))
-       "content-type")))
+       [:juxt.pick.alpha/representation-metadata "content-type"])))
 
     (is
      (=
       "text/html;charset=utf-8"
-      (get
+      (get-in
        (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
           :uri "/"
           :headers {"accept" "text/html"}}
          variants))
-       "content-type")))
+       [:juxt.pick.alpha/representation-metadata "content-type"])))
 
     (is
      (=
       "text/plain;charset=utf-8"
-      (get
+      (get-in
        (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
           :uri "/"
           :headers {"accept" "text/plain"}}
          variants))
-       "content-type")))
+       [:juxt.pick.alpha/representation-metadata "content-type"])))
 
     (is
      (=
       "text/plain;charset=utf-8"
-      (get
+      (get-in
        (:juxt.pick.alpha/representation
         (pick/pick
          {:request-method :get
           :uri "/"
           :headers {"accept" "text/html;q=0.8,text/plain"}}
          variants))
-       "content-type")))
+       [:juxt.pick.alpha/representation-metadata "content-type"])))
 
     (is
      (=
@@ -131,4 +134,5 @@
      {:request-method :get
       :uri "/"
       :headers {"accept" "text/html"}}
-     [{"content-type" "texthtml"}]))))
+     [{:juxt.pick.alpha/representation-metadata
+       {"content-type" "texthtml"}}]))))

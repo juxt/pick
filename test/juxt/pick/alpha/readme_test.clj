@@ -2,20 +2,34 @@
 
 (ns juxt.pick.alpha.readme-test
   (:require
-   [juxt.pick.alpha.ring :as pick]
+   [juxt.pick.alpha.ring :refer [pick]]
+   [juxt.pick.alpha :as pick]
    [clojure.test :refer [deftest is are testing]]))
 
-(pick/pick
-  ;; A ring request (where headers indicate preferences)
-  {:request-method :get
-   :uri "/"
-   :headers {"accept" "text/html"
-             "accept-language" "de"}}
-  ;; Possible representations
-  [{:juxt.pick.alpha/content-type "text/html;charset=utf-8"
-    :juxt.pick.alpha/content-language "en"}
+(deftest readme-test
+  (is
+   (=
+    2
+    (get-in
+     (pick
+      ;; A ring request (where headers indicate preferences)
+      {:request-method :get
+       :uri "/"
+       :headers {"accept" "text/html"
+                 "accept-language" "de"}}
 
-   {:juxt.pick.alpha/content-type "text/html;charset=utf-8"
-    :juxt.pick.alpha/content-language "de"}
+      ;; Possible representations
+      [{:id 1
+        ::pick/representation-metadata
+        {"content-type" "text/html;charset=utf-8"
+         "content-language" "en"}}
 
-   {:juxt.pick.alpha/content-type "text/plain;charset=utf-8"}])
+       {:id 2
+        ::pick/representation-metadata
+        {"content-type" "text/html;charset=utf-8"
+         "content-language" "de"}}
+
+       {:id 3
+        ::pick/representation-metadata
+        {"content-type" "text/plain;charset=utf-8"}}])
+     [::pick/representation :id]))))

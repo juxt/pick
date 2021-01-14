@@ -2,32 +2,37 @@
 
 (ns juxt.pick.alpha.ring
   (:require
+   [juxt.pick.alpha :as pick]
    [juxt.reap.alpha.regex :as re]
    [juxt.reap.alpha.ring :as reap.ring]
    [juxt.pick.alpha.apache :refer [apache-select-representation]]
    [juxt.reap.alpha.decoders.rfc7231 :as rfc7231]))
 
-(def content-type (rfc7231/content-type {}))
-(def content-language (rfc7231/content-language {}))
-(def content-encoding (rfc7231/content-encoding {}))
+(def content-type-decoder (rfc7231/content-type {}))
+(def content-language-decoder (rfc7231/content-language {}))
+(def content-encoding-decoder (rfc7231/content-encoding {}))
 
-(defn decode-maybe [r]
-  (cond-> r
-    (and (get r "content-type") (not (:juxt.reap.alpha.rfc7231/content-type r)))
-    (assoc :juxt.reap.alpha.rfc7231/content-type
-           (or
-            (content-type (re/input (get r "content-type")))
-            (throw (ex-info "Malformed content-type" {:input (get r "content-type")}))))
-    (and (get r "content-language") (not (:juxt.reap.alpha.rfc7231/content-language r)))
-    (assoc :juxt.reap.alpha.rfc7231/content-language
-           (or
-            (content-language (re/input (get r "content-language")))
-            (throw (ex-info "Malformed content-language" {:input (get r "content-language")}))))
-    (and (get r "content-encoding") (not (:juxt.reap.alpha.rfc7231/content-encoding r)))
-    (assoc :juxt.reap.alpha.rfc7231/content-encoding
-           (or
-            (content-encoding (re/input (get r "content-encoding")))
-            (throw (ex-info "Malformed content-encoding" {:input (get r "content-encoding")}))))))
+(defn decode-maybe [rep]
+  (let [content-type (get-in rep [::pick/representation-metadata "content-type"])
+        content-language (get-in rep [::pick/representation-metadata "content-language"])
+        content-encoding (get-in rep [::pick/representation-metadata "content-encoding"])]
+    (cond-> rep
+      (and content-type (not (:juxt.reap.alpha.rfc7231/content-type rep)))
+      (assoc :juxt.reap.alpha.rfc7231/content-type
+             (or (content-type-decoder (re/input content-type))
+                 (throw (ex-info "Malformed content-type" {:input content-type}))))
+
+      (and content-language (not (:juxt.reap.alpha.rfc7231/content-language rep)))
+      (assoc :juxt.reap.alpha.rfc7231/content-language
+             (or
+              (content-language-decoder (re/input content-language))
+              (throw (ex-info "Malformed content-language" {:input content-language}))))
+
+      (and content-encoding (not (:juxt.reap.alpha.rfc7231/content-encoding rep)))
+      (assoc :juxt.reap.alpha.rfc7231/content-encoding
+             (or
+              (content-encoding-decoder (re/input content-encoding))
+              (throw (ex-info "Malformed content-encoding" {:input content-encoding})))))))
 
 (defn pick
   ([request representations]
@@ -35,6 +40,6 @@
   ([request representations opts]
    (apache-select-representation
     (into
-     {:juxt.pick.alpha/request-headers (reap.ring/headers->decoded-preferences (:headers request))
-      :juxt.pick.alpha/representations (map decode-maybe representations)}
+     {::pick/request-headers (reap.ring/headers->decoded-preferences (:headers request))
+      ::pick/representations (map decode-maybe representations)}
      opts))))
