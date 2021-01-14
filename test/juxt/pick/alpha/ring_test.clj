@@ -136,3 +136,26 @@
       :headers {"accept" "text/html"}}
      [{:juxt.pick.alpha/representation-metadata
        {"content-type" "texthtml"}}]))))
+
+(deftest no-metadata-key-test
+  (is
+   (thrown-with-msg?
+    clojure.lang.ExceptionInfo
+    #"Representation must have metadata .*"
+    (pick/pick
+     {:request-method :get
+      :uri "/"
+      :headers {"accept" "text/html"}}
+     [{}]))))
+
+(deftest no-content-type-test-provided
+  (is
+   (thrown-with-msg?
+    clojure.lang.ExceptionInfo
+    #"Representation must have a value for content-type"
+    (pick/pick
+     {:request-method :get
+      :uri "/"
+      :headers {"accept" "text/html"}}
+     [{:juxt.pick.alpha/representation-metadata
+       {}}]))))
