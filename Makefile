@@ -4,7 +4,7 @@ all: 	lint2 test
 
 test:
 	echo "pick:<span foreground='#ff3'>TEST</span>" > /tmp/pick-test-status
-	clojure -Atest && echo "pick:PASS" > /tmp/pick-test-status || echo "<span foreground='red'>pick:FAIL</span>" > /tmp/pick-test-status
+	clojure -Mtest && echo "pick:PASS" > /tmp/pick-test-status || echo "<span foreground='red'>pick:FAIL</span>" > /tmp/pick-test-status
 
 lint:
 	clojure -Alint
