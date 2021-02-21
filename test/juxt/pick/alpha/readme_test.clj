@@ -3,7 +3,7 @@
 (ns juxt.pick.alpha.readme-test
   (:require
    [juxt.pick.alpha.ring :refer [pick]]
-   [clojure.test :refer [deftest is are testing]]))
+   [clojure.test :refer [deftest is]]))
 
 (alias 'http (create-ns 'juxt.http.alpha))
 
