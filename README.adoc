@@ -13,27 +13,25 @@ Suppose you are writing a web service and want to provide proactive content
 negotiation based on the accept headers in the client request. Suppose also that
 you have established which representations you want to choose between.
 
-A representation is a map that has a `:juxt.pick.alpha/representation-metadata`
-containing its metadata.
+A representation is a map that one or more of the following keys:
 
-The metadata can contain any, some or all of the following string keys:
-
-* `"content-type"` -- the media-type and charset of the representation
-* `"content-encoding"` -- how the representation has been encoded (e.g. `gzip`)
-* `"content-language"` -- the natural language of the representation (e.g. `es`)
+* `:juxt.http.alpha/content-type` -- the media-type and charset of the representation
+* `:juxt.http.alpha/content-encoding` -- how the representation has been encoded (e.g. `gzip`)
+* `:juxt.http.alpha/content-language` -- the natural language of the representation (e.g. `es`)
+* `:juxt.http.alpha/content-length` -- the length of the payload
 
 .An example representation
 ====
 [source,clojure]
 ----
-(require '[juxt.pick.alpha :as pick])
+(alias 'http (create-ns 'juxt.http.alpha))
 
 {
 …
- ::pick/representation-metadata
- {"content-type" "text/html;charset=utf-8"
-  "content-encoding" "gzip"
-  "content-language" "en-US"}
+ {:juxt.http.alpha/content-type "text/html;charset=utf-8"
+  :juxt.http.alpha/content-encoding "gzip"
+  :juxt.http.alpha/content-language "en-US"
+  :juxt.http.alpha/content-length 20578}
 …
 }
 ----
@@ -46,8 +44,9 @@ Here's how:
 [source,clojure]
 ----
 (require
-  '[juxt.pick.alpha.ring :refer [pick]]
-  '[juxt.pick.alpha :as pick])
+  '[juxt.pick.alpha.ring :refer [pick]])
+
+(alias 'http (create-ns 'juxt.http.alpha))
 
 (pick
   ;; A ring request (where headers indicate preferences)
@@ -57,19 +56,17 @@ Here's how:
              "accept-language" "de"}}
 
   ;; Possible representations
-  [{:id 1
-    ::pick/representation-metadata
-    {"content-type" "text/html;charset=utf-8"
-     "content-language" "en"}}
+  [
+   {:id 1
+    ::http/content-type "text/html;charset=utf-8"
+    ::http/content-language "en"}
 
    {:id 2
-    ::pick/representation-metadata
-    {"content-type" "text/html;charset=utf-8"
-     "content-language" "de"}}
+    ::http/content-type "text/html;charset=utf-8"
+    ::http/content-language "de"}
 
    {:id 3
-    ::pick/representation-metadata
-    {"content-type" "text/plain;charset=utf-8"}}])
+    ::http/content-type "text/plain;charset=utf-8"}])
 
 =>
 {:juxt.pick.alpha/representation {…} ; most acceptable representation

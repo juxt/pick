@@ -2,51 +2,57 @@
 
 (ns juxt.pick.alpha.ring-test
   (:require
-   [juxt.pick.alpha.ring :as pick]
+   [juxt.pick.alpha.ring :as pick.ring]
    [clojure.test :refer [deftest is]]))
+
+(alias 'pick (create-ns 'juxt.pick.alpha))
+(alias 'http (create-ns 'juxt.http.alpha))
+
+(def variants [{::http/content-type "text/html;charset=utf-8"
+                ::http/content-language "en"}
+
+              {::http/content-type "text/html;charset=utf-8"
+               ::http/content-language "de"}
+
+              {::http/content-type "text/plain;charset=utf-8"}])
 
 (deftest api-test
   (let [variants
-        [{:juxt.pick.alpha/representation-metadata
-          {"content-type" "text/html;charset=utf-8"
-           "content-language" "en"}}
+        [{::http/content-type "text/html;charset=utf-8"
+          ::http/content-language "en"}
 
-         {:juxt.pick.alpha/representation-metadata
-          {"content-type" "text/html;charset=utf-8"
-           "content-language" "de"}}
+         {::http/content-type "text/html;charset=utf-8"
+          ::http/content-language "de"}
 
-         {:juxt.pick.alpha/representation-metadata
-          {"content-type" "text/plain;charset=utf-8"}}]]
+         {::http/content-type "text/plain;charset=utf-8"}]]
     (is
      (=
       "en"
       (get-in
-       (:juxt.pick.alpha/representation
-        (pick/pick
-         {:request-method :get
-          :uri "/"
-          :headers {"accept" "text/html"
-                    "accept-language" "en, de, es"}}
-         variants))
-       [:juxt.pick.alpha/representation-metadata "content-language"])))
+       (pick.ring/pick
+        {:request-method :get
+         :uri "/"
+         :headers {"accept" "text/html"
+                   "accept-language" "en, de, es"}}
+        variants)
+       [::pick/representation ::http/content-language])))
 
     (is
      (=
       "de"
       (get-in
-       (:juxt.pick.alpha/representation
-        (pick/pick
-         {:request-method :get
-          :uri "/"
-          :headers {"accept" "text/html"
-                    "accept-language" "de"}}
-         variants))
-       [:juxt.pick.alpha/representation-metadata "content-language"])))
+       (pick.ring/pick
+        {:request-method :get
+         :uri "/"
+         :headers {"accept" "text/html"
+                   "accept-language" "de"}}
+        variants)
+       [::pick/representation ::http/content-language])))
 
     (is
      (nil?
-      (:juxt.pick.alpha/representation
-       (pick/pick
+      (::pick/representation
+       (pick.ring/pick
         {:request-method :get
          :uri "/"
          :headers {"accept" "text/html"
@@ -57,105 +63,87 @@
      (=
       "en"
       (get-in
-       (:juxt.pick.alpha/representation
-        (pick/pick
-         {:request-method :get
-          :uri "/"
-          :headers {"accept" "text/html"
-                    "accept-language" "es, en"}}
-         variants))
-       [:juxt.pick.alpha/representation-metadata "content-language"])))
+       (pick.ring/pick
+        {:request-method :get
+         :uri "/"
+         :headers {"accept" "text/html"
+                   "accept-language" "es, en"}}
+        variants)
+       [::pick/representation ::http/content-language])))
 
     (is
      (=
       "text/plain;charset=utf-8"
       (get-in
-       (:juxt.pick.alpha/representation
-        (pick/pick
-         {:request-method :get
-          :uri "/"
-          :headers {"accept" "text/plain"}}
-         variants))
-       [:juxt.pick.alpha/representation-metadata "content-type"])))
+       (pick.ring/pick
+        {:request-method :get
+         :uri "/"
+         :headers {"accept" "text/plain"}}
+        variants)
+       [::pick/representation ::http/content-type])))
 
     (is
      (=
       "text/html;charset=utf-8"
       (get-in
-       (:juxt.pick.alpha/representation
-        (pick/pick
-         {:request-method :get
-          :uri "/"
-          :headers {"accept" "text/html"}}
-         variants))
-       [:juxt.pick.alpha/representation-metadata "content-type"])))
+       (pick.ring/pick
+        {:request-method :get
+         :uri "/"
+         :headers {"accept" "text/html"}}
+        variants)
+       [::pick/representation ::http/content-type])))
 
     (is
      (=
       "text/plain;charset=utf-8"
       (get-in
-       (:juxt.pick.alpha/representation
-        (pick/pick
-         {:request-method :get
-          :uri "/"
-          :headers {"accept" "text/plain"}}
-         variants))
-       [:juxt.pick.alpha/representation-metadata "content-type"])))
+       (pick.ring/pick
+        {:request-method :get
+         :uri "/"
+         :headers {"accept" "text/plain"}}
+        variants)
+       [::pick/representation ::http/content-type])))
 
     (is
      (=
       "text/plain;charset=utf-8"
       (get-in
-       (:juxt.pick.alpha/representation
-        (pick/pick
-         {:request-method :get
-          :uri "/"
-          :headers {"accept" "text/html;q=0.8,text/plain"}}
-         variants))
-       [:juxt.pick.alpha/representation-metadata "content-type"])))
+       (pick.ring/pick
+        {:request-method :get
+         :uri "/"
+         :headers {"accept" "text/html;q=0.8,text/plain"}}
+        variants)
+       [::pick/representation ::http/content-type])))
 
     (is
      (=
       ["accept" "accept-language"]
-      (:juxt.pick.alpha/vary
-       (pick/pick
+      (::pick/vary
+       (pick.ring/pick
         {:request-method :get
          :uri "/"
          :headers {"accept" "text/html"}}
         variants
-        {:juxt.pick.alpha/vary? true}))))))
+        {::pick/vary? true}))))))
 
 (deftest malformed-content-type-test
   (is
    (thrown-with-msg?
     clojure.lang.ExceptionInfo
     #"Malformed content-type"
-    (pick/pick
+    (pick.ring/pick
      {:request-method :get
       :uri "/"
       :headers {"accept" "text/html"}}
-     [{:juxt.pick.alpha/representation-metadata
-       {"content-type" "texthtml"}}]))))
+     [{::http/content-type "texthtml"}]))))
 
 (deftest no-metadata-key-test
   (is
    (thrown-with-msg?
     clojure.lang.ExceptionInfo
-    #"Representation must have metadata .*"
-    (pick/pick
+    #"Representation must have a value for content-type.*"
+    (pick.ring/pick
      {:request-method :get
       :uri "/"
       :headers {"accept" "text/html"}}
      [{}]))))
-
-(deftest no-content-type-test-provided
-  (is
-   (thrown-with-msg?
-    clojure.lang.ExceptionInfo
-    #"Representation must have a value for content-type"
-    (pick/pick
-     {:request-method :get
-      :uri "/"
-      :headers {"accept" "text/html"}}
-     [{:juxt.pick.alpha/representation-metadata
-       {}}]))))

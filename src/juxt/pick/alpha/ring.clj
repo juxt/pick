@@ -2,32 +2,31 @@
 
 (ns juxt.pick.alpha.ring
   (:require
-   [juxt.pick.alpha :as pick]
    [juxt.reap.alpha.regex :as re]
    [juxt.reap.alpha.ring :as reap.ring]
    [juxt.pick.alpha.apache :refer [apache-select-representation]]
    [juxt.reap.alpha.decoders.rfc7231 :as rfc7231]))
+
+(alias 'http (create-ns 'juxt.http.alpha))
+(alias 'pick (create-ns 'juxt.pick.alpha))
 
 (def content-type-decoder (rfc7231/content-type {}))
 (def content-language-decoder (rfc7231/content-language {}))
 (def content-encoding-decoder (rfc7231/content-encoding {}))
 
 (defn decode-maybe [rep]
-  (let [content-type (get-in rep [::pick/representation-metadata "content-type"])
-        content-language (get-in rep [::pick/representation-metadata "content-language"])
-        content-encoding (get-in rep [::pick/representation-metadata "content-encoding"])]
-
-    (when-not (map? (::pick/representation-metadata rep))
-      (throw
-       (ex-info
-        (format "Representation must have metadata under the key %s" ::pick/representation-metadata)
-        {})))
+  (let [content-type (::http/content-type rep)
+        content-language (::http/content-language rep)
+        content-encoding (::http/content-encoding rep)]
 
     (when-not content-type
       (throw
        (ex-info
         "Representation must have a value for content-type"
-        {:representation-metadata (::pick/representation-metadata rep)})))
+        {:representation rep})))
+
+    ;; TODO: Ultimately, need to use delays to avoid parsing these headers
+    ;; multiple times in the same request.
 
     (cond-> rep
       (and content-type (not (:juxt.reap.alpha.rfc7231/content-type rep)))
