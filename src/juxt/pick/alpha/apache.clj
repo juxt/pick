@@ -78,9 +78,7 @@
   "Section 2.8: 'Select the variants with the smallest content length.'"
   [{::pick/keys [representations]}]
   (let [[representation & rejects]
-      (sort-by
-       ::http/content-length
-       (map (fn [x] (dissoc x :juxt.http.alpha/body)) representations))]
+      (sort-by ::http/content-length representations)]
   (->
    {:representations [representation] :rejects rejects}
    (add-meta #'select-smallest-content-length))))
