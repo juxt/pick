@@ -5,6 +5,7 @@
    [juxt.pick.alpha.core
     :refer [rate-representations segment-by]]))
 
+(alias 'http (create-ns 'juxt.http.alpha))
 (alias 'pick (create-ns 'juxt.pick.alpha))
 
 ;; An implementation in Clojure of Apache's httpd Negotiation Algorithm:
@@ -76,8 +77,13 @@
   select-smallest-content-length
   "Section 2.8: 'Select the variants with the smallest content length.'"
   [{::pick/keys [representations]}]
-  (-> {:representations representations :rejects []}
-      (add-meta #'select-smallest-content-length)))
+  (let [[representation & rejects]
+      (sort-by
+       ::http/content-length
+       (map (fn [x] (dissoc x :juxt.http.alpha/body)) representations))]
+  (->
+   {:representations [representation] :rejects rejects}
+   (add-meta #'select-smallest-content-length))))
 
 (defn
   ^{::step 9}
