@@ -455,14 +455,14 @@
   (reduce
    (fn [acc representation]
      (let [score (or (scorer representation) 0)
-           max-score-so-far (get acc :max-score-so-far -1)
-           representation (assoc representation :score score)]
+           max-score-so-far (get acc ::max-score-so-far -1)
+           representation (assoc representation ::score score)]
        (cond
          (comparator score max-score-so-far)
          (-> acc
              (assoc
               :representations [representation]
-              :max-score-so-far score)
+              ::max-score-so-far score)
              (update :rejects into (:representations acc)))
 
          (= score max-score-so-far)
