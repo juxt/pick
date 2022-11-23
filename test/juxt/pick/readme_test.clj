@@ -1,11 +1,10 @@
 ;; Copyright © 2020, JUXT LTD.
 
-(ns juxt.pick.alpha.readme-test
+(ns juxt.pick.readme-test
   (:require
-   [juxt.pick.alpha.ring :refer [pick]]
-   [clojure.test :refer [deftest is]]))
-
-(alias 'http (create-ns 'juxt.http.alpha))
+   [clojure.test :refer [deftest is]]
+   [juxt.pick.ring :refer [pick]]
+   [juxt.http :as-alias http]))
 
 (deftest readme-test
   (is
@@ -30,4 +29,4 @@
 
        {:id 3
         ::http/content-type "text/plain;charset=utf-8"}])
-     [:juxt.pick.alpha/representation :id]))))
+     [:juxt.pick/representation :id]))))

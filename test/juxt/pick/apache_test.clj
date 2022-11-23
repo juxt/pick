@@ -1,13 +1,12 @@
 ;; Copyright © 2020, JUXT LTD.
 
-(ns juxt.pick.alpha.apache-test
+(ns juxt.pick.apache-test
   (:require
    [clojure.test :refer [deftest is are]]
-   [juxt.pick.alpha.apache :refer [apache-select-representation]]
+   [juxt.pick.impl.apache :refer [apache-select-representation]]
    [juxt.reap.alpha.decoders :as reap]
-   [juxt.reap.alpha.rfc7231 :as rfc7231]))
-
-(alias 'pick (create-ns 'juxt.pick.alpha))
+   [juxt.reap.alpha.rfc7231 :as rfc7231]
+   [juxt.pick :as-alias pick]))
 
 (deftest accept-test
 
@@ -276,7 +275,7 @@
        ::rfc7231/content-type (reap/content-type "text/plain")}]
      ::pick/explain? false})))
 
-;; Awaiting a redesigned test-suite for juxt.pick.alpha/explain? and juxt.pick.alpha/vary?
+;; Awaiting a redesigned test-suite for juxt.pick/explain? and juxt.pick/vary?
 #_(deftest explain-test
   (let [request
         {"accept" (reap/accept "text/plain,text/html;q=0.1")

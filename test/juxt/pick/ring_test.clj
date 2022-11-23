@@ -1,12 +1,11 @@
 ;; Copyright © 2020, JUXT LTD.
 
-(ns juxt.pick.alpha.ring-test
+(ns juxt.pick.ring-test
   (:require
-   [juxt.pick.alpha.ring :as pick.ring]
-   [clojure.test :refer [deftest is]]))
-
-(alias 'pick (create-ns 'juxt.pick.alpha))
-(alias 'http (create-ns 'juxt.http.alpha))
+   [juxt.pick.ring :as pick.ring]
+   [clojure.test :refer [deftest is]]
+   [juxt.pick :as-alias pick]
+   [juxt.http :as-alias http]))
 
 (def variants [{::http/content-type "text/html;charset=utf-8"
                 ::http/content-language "en"}

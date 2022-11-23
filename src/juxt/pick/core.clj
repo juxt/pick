@@ -1,6 +1,6 @@
 ;; Copyright © 2020, JUXT LTD.
 
-(ns juxt.pick.alpha.core
+(ns juxt.pick.core
   (:require
    [clojure.string :as str]))
 
@@ -115,7 +115,7 @@
     (assert representation)
     (if-let [content-type (:juxt.reap.alpha.rfc7231/content-type representation)]
       (assoc representation
-             :juxt.pick.alpha/content-type-qvalue
+             :juxt.pick/content-type-qvalue
              (:qvalue (acceptable-content-type-quality parsed-accept-header content-type)))
       ;; No content-type on representation, return representation untouched.
       representation)))
@@ -161,7 +161,7 @@
     (if-let [charset (get-in representation [:juxt.reap.alpha.rfc7231/content-type :juxt.reap.alpha.rfc7231/parameter-map "charset"])]
       (assoc
        representation
-       :juxt.pick.alpha/charset-qvalue
+       :juxt.pick/charset-qvalue
        (:qvalue
         (acceptable-charset-quality
          parsed-accept-charset-header
@@ -254,7 +254,7 @@
             ;; -- RFC 7231 Section 5.3.4
             1.0)]
       (cond-> representation
-        qvalue (conj [:juxt.pick.alpha/encoding-qvalue qvalue])))))
+        qvalue (conj [:juxt.pick/encoding-qvalue qvalue])))))
 
 ;; Languages
 
@@ -361,7 +361,7 @@
 
         (assoc
          representation
-         :juxt.pick.alpha/language-qvalue
+         :juxt.pick/language-qvalue
          combined-qvalue
          ))
       ;; No content-language, so no quality applied.
@@ -397,7 +397,7 @@
                             #(/ % 2)
                             (long (Math/pow 2 (dec (count parsed-accept-language-header)))))
             combined-ordering-weight (reduce + (map weight parsed-accept-language-header weight-factors))]
-        (assoc representation :juxt.pick.alpha/language-ordering-weight combined-ordering-weight))
+        (assoc representation :juxt.pick/language-ordering-weight combined-ordering-weight))
       ;; No content-language (or no accept-language header) so no
       ;; language-ordering applied.
       representation)))
@@ -405,10 +405,10 @@
 (defn acceptable? [rep]
   (pos?
    (*
-    (get rep :juxt.pick.alpha/content-type-qvalue 1)
-    (get rep :juxt.pick.alpha/charset-qvalue 1)
-    (get rep :juxt.pick.alpha/encoding-qvalue 1)
-    (get rep :juxt.pick.alpha/language-qvalue 1))))
+    (get rep :juxt.pick/content-type-qvalue 1)
+    (get rep :juxt.pick/charset-qvalue 1)
+    (get rep :juxt.pick/encoding-qvalue 1)
+    (get rep :juxt.pick/language-qvalue 1))))
 
 (defn rate-representation
   "Given a map of accept headers (with reap-parsed values), and a (reap-parsed)
@@ -437,7 +437,7 @@
            (force (get accept-declarations "accept-charset"))))
 
          representation)]
-    (assoc rep :juxt.pick.alpha/acceptable? (acceptable? rep))))
+    (assoc rep :juxt.pick/acceptable? (acceptable? rep))))
 
 (defn rate-representations [accept-declarations representations]
   (map #(rate-representation accept-declarations %) representations))

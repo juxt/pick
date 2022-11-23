@@ -1,9 +1,9 @@
 ;; Copyright © 2020, JUXT LTD.
 
-(ns juxt.pick.alpha.core-test
+(ns juxt.pick.core-test
   (:require
    [clojure.test :refer [deftest is are]]
-   [juxt.pick.alpha.core
+   [juxt.pick.core
     :refer [match-parameters? acceptable-content-type-quality
             acceptable-charset-quality
             assign-language-quality basic-language-match?
@@ -156,7 +156,7 @@
         (=
          expected
          (map
-          (juxt :id (comp round :juxt.pick.alpha/encoding-qvalue))
+          (juxt :id (comp round :juxt.pick/encoding-qvalue))
           (map
            (assign-encoding-quality
             (rdec/accept-encoding
@@ -373,7 +373,7 @@
         (=
          expected
          (map
-          (juxt :id (comp round :juxt.pick.alpha/language-qvalue))
+          (juxt :id (comp round :juxt.pick/language-qvalue))
           (map
            (assign-language-quality
             (rdec/accept-language accept-language-header))
@@ -434,7 +434,7 @@
         (=
          expected
          (map
-          (juxt :id :juxt.pick.alpha/language-ordering-weight)
+          (juxt :id :juxt.pick/language-ordering-weight)
           (map
            (assign-language-ordering
             (rdec/accept-language accept-language-header))

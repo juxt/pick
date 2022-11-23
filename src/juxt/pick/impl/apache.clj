@@ -1,12 +1,10 @@
 ;; Copyright © 2020, JUXT LTD.
 
-(ns juxt.pick.alpha.apache
+(ns juxt.pick.impl.apache
   (:require
-   [juxt.pick.alpha.core
-    :refer [rate-representations segment-by]]))
-
-(alias 'http (create-ns 'juxt.http.alpha))
-(alias 'pick (create-ns 'juxt.pick.alpha))
+   [juxt.pick.core :refer [rate-representations segment-by]]
+   [juxt.http :as-alias http]
+   [juxt.pick :as-alias pick]))
 
 ;; An implementation in Clojure of Apache's httpd Negotiation Algorithm:
 ;; http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
@@ -35,7 +33,7 @@
   "Section 2.2: 'Select the variants with the highest language quality factor.'"
   [{::pick/keys [representations]}]
   (let [result
-        (segment-by representations :juxt.pick.alpha/language-qvalue >)]
+        (segment-by representations ::pick/language-qvalue >)]
     (add-meta result #'select-languages)))
 
 (defn
@@ -98,11 +96,11 @@
 
   Options include:
 
-  :juxt.pick.alpha/request-headers – a map, keyed by the lower-case header name with the reap parsed headers as values
-  :juxt.pick.alpha/representations – a collection of representations
-  :juxt.pick.alpha/explain? – if truthy, provide an explain in the return value
-  :juxt.pick.alpha/vary? – if truthy, compute the preferences that will vary the choice
-  :juxt.pick.alpha/inject-steps – in future, this will be used to inject additional steps
+  :juxt.pick/request-headers – a map, keyed by the lower-case header name with the reap parsed headers as values
+  :juxt.pick/representations – a collection of representations
+  :juxt.pick/explain? – if truthy, provide an explain in the return value
+  :juxt.pick/vary? – if truthy, compute the preferences that will vary the choice
+  :juxt.pick/inject-steps – in future, this will be used to inject additional steps
 
   "
   [{::pick/keys [request-headers representations vary? explain?] :as opts}]

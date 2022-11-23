@@ -4,7 +4,7 @@ A Clojure library for HTTP server-driven content negotiation.
 
 [WARNING]
 --
-STATUS: Alpha. Maturing.
+STATUS: Stable. In use.
 --
 
 == Quick Start
@@ -15,23 +15,23 @@ you have established which representations you want to choose between.
 
 A representation is a map that one or more of the following keys:
 
-* `:juxt.http.alpha/content-type` -- the media-type and charset of the representation
-* `:juxt.http.alpha/content-encoding` -- how the representation has been encoded (e.g. `gzip`)
-* `:juxt.http.alpha/content-language` -- the natural language of the representation (e.g. `es`)
-* `:juxt.http.alpha/content-length` -- the length of the payload
+* `:juxt.http/content-type` -- the media-type and charset of the representation
+* `:juxt.http/content-encoding` -- how the representation has been encoded (e.g. `gzip`)
+* `:juxt.http/content-language` -- the natural language of the representation (e.g. `es`)
+* `:juxt.http/content-length` -- the length of the payload
 
 .An example representation
 ====
 [source,clojure]
 ----
-(alias 'http (create-ns 'juxt.http.alpha))
+(alias 'http (create-ns 'juxt.http))
 
 {
 …
- {:juxt.http.alpha/content-type "text/html;charset=utf-8"
-  :juxt.http.alpha/content-encoding "gzip"
-  :juxt.http.alpha/content-language "en-US"
-  :juxt.http.alpha/content-length 20578}
+ {:juxt.http/content-type "text/html;charset=utf-8"
+  :juxt.http/content-encoding "gzip"
+  :juxt.http/content-language "en-US"
+  :juxt.http/content-length 20578}
 …
 }
 ----
@@ -44,9 +44,8 @@ Here's how:
 [source,clojure]
 ----
 (require
-  '[juxt.pick.alpha.ring :refer [pick]])
-
-(alias 'http (create-ns 'juxt.http.alpha))
+  '[juxt.pick.ring :refer [pick]]
+  '[juxt.http :as-alias http])
 
 (pick
   ;; A ring request (where headers indicate preferences)
@@ -69,8 +68,8 @@ Here's how:
     ::http/content-type "text/plain;charset=utf-8"}])
 
 =>
-{:juxt.pick.alpha/representation {…} ; most acceptable representation
- :juxt.pick.alpha/representations […] ; all representations (scored)
+{:juxt.pick/representation {…} ; most acceptable representation
+ :juxt.pick/representations […] ; all representations (scored)
 }
 
 ----
@@ -121,8 +120,8 @@ The option map supports the following entries:
 
 [cols="3m,5"]
 |===
-|:juxt.pick.alpha/explain?|if truthy, provide an explain in the return value
-|:juxt.pick.alpha/vary?|if truthy, compute the preferences that will vary the choice
+|:juxt.pick/explain?|if truthy, provide an explain in the return value
+|:juxt.pick/vary?|if truthy, compute the preferences that will vary the choice
 |===
 
 === Alternatives

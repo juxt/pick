@@ -1,14 +1,13 @@
 ;; Copyright © 2020, JUXT LTD.
 
-(ns juxt.pick.alpha.ring
+(ns juxt.pick.ring
   (:require
+   [juxt.http :as-alias http]
+   [juxt.pick :as-alias pick]
+   [juxt.pick.impl.apache :refer [apache-select-representation]]
    [juxt.reap.alpha.regex :as re]
    [juxt.reap.alpha.ring :as reap.ring]
-   [juxt.pick.alpha.apache :refer [apache-select-representation]]
    [juxt.reap.alpha.decoders.rfc7231 :as rfc7231]))
-
-(alias 'http (create-ns 'juxt.http.alpha))
-(alias 'pick (create-ns 'juxt.pick.alpha))
 
 (def content-type-decoder (rfc7231/content-type {}))
 (def content-language-decoder (rfc7231/content-language {}))
