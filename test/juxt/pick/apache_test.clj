@@ -36,10 +36,19 @@
               (reap/content-type "application/edn")
               :juxt.pick/quality-of-source 1.0}
 
+             ;; Test that :json is selected over :json-large, since it
+             ;; has a lesser content-length
+             {:id :json-large
+              ::rfc7231/content-type
+              (reap/content-type "application/json")
+              :juxt.pick/quality-of-source 0.8
+              :juxt.http/content-length 2000}
+
              {:id :json
               ::rfc7231/content-type
               (reap/content-type "application/json")
-              :juxt.pick/quality-of-source 0.8}
+              :juxt.pick/quality-of-source 0.8
+              :juxt.http/content-length 1000}
 
              ]})
           (get-in [:juxt.pick/representation :id])))
