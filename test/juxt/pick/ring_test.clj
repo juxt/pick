@@ -170,20 +170,3 @@
                 variants)]
 
            (:lang (representation)))))))
-
-
-#_(let [{:juxt.pick/keys [representation]}
-      (pick.ring/pick
-       {:ring.request/method :get
-        :ring.request/headers {"accept" "text/html,text/plain;q=0.8"}}
-       [
-        #_^{"content-type" "text/plain"}
-        (fn [_] {:body "hello"})
-        {:juxt.http/content-type "text/plain"}
-
-        #_^{"content-type" "text/html"}
-        (fn [_] {:body "<h1>hello</h1>"})
-        {:juxt.http/content-type "text/html"}
-        ])]
-  representation
-  )
