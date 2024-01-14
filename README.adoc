@@ -120,18 +120,29 @@ The option map supports the following entries:
 |:juxt.pick/vary?|if truthy, compute the preferences that will vary the choice
 |===
 
-=== Alternative: Use strings as keywords
+=== API alternative: Use of metadata strings
 
-For convenience, a representation can be provided with either keywords in the `juxt.http` namespace, or plain strings, or a mix of both.
+Up until now, we have described a representation as a Clojure map with keywords in the `juxt.http` namespace.
+Alternatively, a representation can be any object with Clojure metadata.
+The metadata should contain the string keywords corresponding to the HTTP representation metadata.
 
 [%header,cols="1m,1m"]
 |===
-|keyword|string alternative
+|keyword|metadata string alternative
 |:juxt.http/content-type|"content-type"
 |:juxt.http/content-encoding|"content-encoding"
 |:juxt.http/content-language|"content-language"
 |:juxt.http/content-length|"content-length"
 |===
+
+For example, here is a representation defined as a Clojure function.
+
+[source,clojure]
+----
+^{"content-type" "text/html;charset=utf-8"
+  "content-language" "en"}
+(fn [] …)
+----
 
 === Alternatives
 
@@ -194,4 +205,3 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
