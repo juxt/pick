@@ -150,22 +150,25 @@
   (let [variants
         [^{"content-type" "text/html;charset=utf-8"
           "content-language" "en"}
-         {:type :html :lang :en}
+         (fn [] {:type :html :lang :en})
 
          ^{"content-type" "text/html;charset=utf-8"
           "content-language" "de"}
-         {:type :html :lang :de}
+         (fn [] {:type :html :lang :de})
 
          ^{"content-type" "text/plain;charset=utf-8"}
-         {:type :plain :lang :de}
+         (fn [] {:type :plain :lang :de})
          ]]
     (is (=
          :en
-         (get-in
-          (pick.ring/pick
-           {:request-method :get
-            :uri "/"
-            :headers {"accept" "text/html"
-                      "accept-language" "en, de, es"}}
-           variants)
-          [:juxt.pick/representation :lang])))))
+         (let [{:juxt.pick/keys [representation]}
+               (pick.ring/pick
+                {:request-method :get
+                 :uri "/"
+                 :headers {"accept" "text/html"
+                           "accept-language" "en, de, es"}}
+                variants)]
+
+           (:lang (representation))
+
+           )))))

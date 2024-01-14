@@ -11,14 +11,19 @@
 (def content-language-decoder (rfc7231/content-language {}))
 (def content-encoding-decoder (rfc7231/content-encoding {}))
 
-(defn decode-maybe [rep]
+(defn wrap-representation
+  "A representation can be a Clojure map or an object (satisfying
+  clojure.lang.IMeta) with metadata. Therefore, we wrap this
+  representation within a Clojure map."
+  [rep]
   (let [meta (meta rep)
         content-type (or (get meta "content-type")
-                         (:juxt.http/content-type rep))
+                         (when (associative? rep) (:juxt.http/content-type rep)))
         content-language (or (get meta "content-language")
-                             (:juxt.http/content-language rep))
+                             (when (associative? rep)
+                               (:juxt.http/content-language rep)))
         content-encoding (or (get meta "content-encoding")
-                             (:juxt.http/content-encoding rep))
+                             (when (associative? rep) (:juxt.http/content-encoding rep)))
         ;; If content-length is given as a string key with a string
         ;; value, we parse the string into a long since it may be
         ;; required as a sorting key in the selection algorithm.
@@ -33,7 +38,7 @@
     ;; TODO: Ultimately, need to use delays to avoid parsing these headers
     ;; multiple times in the same request.
 
-    (cond-> rep
+    (cond-> {:juxt.pick/unwrapped-representation rep}
       (and content-type (not (:juxt.reap.rfc7231/content-type rep)))
       (assoc :juxt.reap.rfc7231/content-type
              (or (content-type-decoder (re/input content-type))
@@ -54,14 +59,14 @@
       (string? content-length)
       (assoc :juxt.http/content-length (Long/parseLong content-length)))))
 
-
-
 (defn pick
   ([request representations]
    (pick request representations nil))
   ([request representations opts]
-   (apache-select-representation
-    (into
-     {:juxt.pick/request-headers (reap.ring/headers->decoded-preferences (:headers request))
-      :juxt.pick/representations (map decode-maybe representations)}
-     opts))))
+   (->
+    (apache-select-representation
+     (into
+      {:juxt.pick/request-headers (reap.ring/headers->decoded-preferences (:headers request))
+       :juxt.pick/representations (map wrap-representation representations)}
+      opts))
+    (update :juxt.pick/representation :juxt.pick/unwrapped-representation))))
