@@ -27,10 +27,10 @@
       "en"
       (get-in
        (pick.ring/pick
-        {:request-method :get
-         :uri "/"
-         :headers {"accept" "text/html"
-                   "accept-language" "en, de, es"}}
+        {:ring.request/method :get
+         :ring.request/path "/"
+         :ring.request/headers {"accept" "text/html"
+                                "accept-language" "en, de, es"}}
         variants)
        [:juxt.pick/representation :juxt.http/content-language])))
 
@@ -39,10 +39,10 @@
       "de"
       (get-in
        (pick.ring/pick
-        {:request-method :get
-         :uri "/"
-         :headers {"accept" "text/html"
-                   "accept-language" "de"}}
+        {:ring.request/method :get
+         :ring.request/path "/"
+         :ring.request/headers {"accept" "text/html"
+                                "accept-language" "de"}}
         variants)
        [:juxt.pick/representation :juxt.http/content-language])))
 
@@ -50,10 +50,10 @@
      (nil?
       (:juxt.pick/representation
        (pick.ring/pick
-        {:request-method :get
-         :uri "/"
-         :headers {"accept" "text/html"
-                   "accept-language" "es"}}
+        {:ring.request/method :get
+         :ring.request/path "/"
+         :ring.request/headers {"accept" "text/html"
+                                "accept-language" "es"}}
         variants))))
 
     (is
@@ -61,10 +61,10 @@
       "en"
       (get-in
        (pick.ring/pick
-        {:request-method :get
-         :uri "/"
-         :headers {"accept" "text/html"
-                   "accept-language" "es, en"}}
+        {:ring.request/method :get
+         :ring.request/path "/"
+         :ring.request/headers {"accept" "text/html"
+                                "accept-language" "es, en"}}
         variants)
        [:juxt.pick/representation :juxt.http/content-language])))
 
@@ -73,9 +73,9 @@
       "text/plain;charset=utf-8"
       (get-in
        (pick.ring/pick
-        {:request-method :get
-         :uri "/"
-         :headers {"accept" "text/plain"}}
+        {:ring.request/method :get
+         :ring.request/path "/"
+         :ring.request/headers {"accept" "text/plain"}}
         variants)
        [:juxt.pick/representation :juxt.http/content-type])))
 
@@ -84,9 +84,9 @@
       "text/html;charset=utf-8"
       (get-in
        (pick.ring/pick
-        {:request-method :get
-         :uri "/"
-         :headers {"accept" "text/html"}}
+        {:ring.request/method :get
+         :ring.request/path "/"
+         :ring.request/headers {"accept" "text/html"}}
         variants)
        [:juxt.pick/representation :juxt.http/content-type])))
 
@@ -95,9 +95,9 @@
       "text/plain;charset=utf-8"
       (get-in
        (pick.ring/pick
-        {:request-method :get
-         :uri "/"
-         :headers {"accept" "text/plain"}}
+        {:ring.request/method :get
+         :ring.request/path "/"
+         :ring.request/headers {"accept" "text/plain"}}
         variants)
        [:juxt.pick/representation :juxt.http/content-type])))
 
@@ -106,9 +106,9 @@
       "text/plain;charset=utf-8"
       (get-in
        (pick.ring/pick
-        {:request-method :get
-         :uri "/"
-         :headers {"accept" "text/html;q=0.8,text/plain"}}
+        {:ring.request/method :get
+         :ring.request/path "/"
+         :ring.request/headers {"accept" "text/html;q=0.8,text/plain"}}
         variants)
        [:juxt.pick/representation :juxt.http/content-type])))
 
@@ -117,9 +117,9 @@
       ["accept" "accept-language"]
       (:juxt.pick/vary
        (pick.ring/pick
-        {:request-method :get
-         :uri "/"
-         :headers {"accept" "text/html"}}
+        {:ring.request/method :get
+         :ring.request/path "/"
+         :ring.request/headers {"accept" "text/html"}}
         variants
         {:juxt.pick/vary? true}))))))
 
@@ -129,9 +129,9 @@
     clojure.lang.ExceptionInfo
     #"Malformed content-type"
     (pick.ring/pick
-     {:request-method :get
-      :uri "/"
-      :headers {"accept" "text/html"}}
+     {:ring.request/method :get
+      :ring.request/path "/"
+      :ring.request/headers {"accept" "text/html"}}
      [{:juxt.http/content-type "texthtml"}]))))
 
 (deftest no-metadata-key-test
@@ -140,20 +140,20 @@
     clojure.lang.ExceptionInfo
     #"Representation must have a value for content-type.*"
     (pick.ring/pick
-     {:request-method :get
-      :uri "/"
-      :headers {"accept" "text/html"}}
+     {:ring.request/method :get
+      :ring.request/path "/"
+      :ring.request/headers {"accept" "text/html"}}
      [{}]))))
 
 
 (deftest string-key-test
   (let [variants
         [^{"content-type" "text/html;charset=utf-8"
-          "content-language" "en"}
+           "content-language" "en"}
          (fn [] {:type :html :lang :en})
 
          ^{"content-type" "text/html;charset=utf-8"
-          "content-language" "de"}
+           "content-language" "de"}
          (fn [] {:type :html :lang :de})
 
          ^{"content-type" "text/plain;charset=utf-8"}
@@ -163,10 +163,27 @@
          :en
          (let [{:juxt.pick/keys [representation]}
                (pick.ring/pick
-                {:request-method :get
-                 :uri "/"
-                 :headers {"accept" "text/html"
-                           "accept-language" "en, de, es"}}
+                {:ring.request/method :get
+                 :ring.request/path "/"
+                 :ring.request/headers {"accept" "text/html"
+                                        "accept-language" "en, de, es"}}
                 variants)]
 
            (:lang (representation)))))))
+
+
+#_(let [{:juxt.pick/keys [representation]}
+      (pick.ring/pick
+       {:ring.request/method :get
+        :ring.request/headers {"accept" "text/html,text/plain;q=0.8"}}
+       [
+        #_^{"content-type" "text/plain"}
+        (fn [_] {:body "hello"})
+        {:juxt.http/content-type "text/plain"}
+
+        #_^{"content-type" "text/html"}
+        (fn [_] {:body "<h1>hello</h1>"})
+        {:juxt.http/content-type "text/html"}
+        ])]
+  representation
+  )

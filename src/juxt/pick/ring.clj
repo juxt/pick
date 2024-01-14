@@ -66,7 +66,11 @@
    (->
     (apache-select-representation
      (into
-      {:juxt.pick/request-headers (reap.ring/headers->decoded-preferences (:headers request))
+      {:juxt.pick/request-headers (reap.ring/headers->decoded-preferences
+                                   (or
+                                    (:ring.request/headers request)
+                                    ;; For compatibility
+                                    (:headers request)))
        :juxt.pick/representations (map wrap-representation representations)}
       opts))
     (update :juxt.pick/representation :juxt.pick/wrapped-representation)
