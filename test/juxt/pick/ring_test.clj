@@ -169,6 +169,4 @@
                            "accept-language" "en, de, es"}}
                 variants)]
 
-           (:lang (representation))
-
-           )))))
+           (:lang (representation)))))))

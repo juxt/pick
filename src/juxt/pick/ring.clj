@@ -38,7 +38,7 @@
     ;; TODO: Ultimately, need to use delays to avoid parsing these headers
     ;; multiple times in the same request.
 
-    (cond-> {:juxt.pick/unwrapped-representation rep}
+    (cond-> {:juxt.pick/wrapped-representation rep}
       (and content-type (not (:juxt.reap.rfc7231/content-type rep)))
       (assoc :juxt.reap.rfc7231/content-type
              (or (content-type-decoder (re/input content-type))
@@ -69,4 +69,5 @@
       {:juxt.pick/request-headers (reap.ring/headers->decoded-preferences (:headers request))
        :juxt.pick/representations (map wrap-representation representations)}
       opts))
-    (update :juxt.pick/representation :juxt.pick/unwrapped-representation))))
+    (update :juxt.pick/representation :juxt.pick/wrapped-representation)
+    (update :juxt.pick/representations #(map :juxt.pick/wrapped-representation %)))))
