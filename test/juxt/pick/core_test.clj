@@ -1,4 +1,4 @@
-;; Copyright © 2020, JUXT LTD.
+;; Copyright © 2020-2024, JUXT LTD.
 
 (ns juxt.pick.core-test
   (:require

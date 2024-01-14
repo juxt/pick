@@ -24,8 +24,6 @@ A representation is a map that one or more of the following keys:
 ====
 [source,clojure]
 ----
-(alias 'http (create-ns 'juxt.http))
-
 {
 …
  {:juxt.http/content-type "text/html;charset=utf-8"
@@ -43,9 +41,7 @@ Here's how:
 
 [source,clojure]
 ----
-(require
-  '[juxt.pick.ring :refer [pick]]
-  '[juxt.http :as-alias http])
+(require '[juxt.pick.ring :refer [pick]])
 
 (pick
   ;; A ring request (where headers indicate preferences)
@@ -57,15 +53,15 @@ Here's how:
   ;; Possible representations
   [
    {:id 1
-    ::http/content-type "text/html;charset=utf-8"
-    ::http/content-language "en"}
+    :juxt.http/content-type "text/html;charset=utf-8"
+    :juxt.http/content-language "en"}
 
    {:id 2
-    ::http/content-type "text/html;charset=utf-8"
-    ::http/content-language "de"}
+    :juxt.http/content-type "text/html;charset=utf-8"
+    :juxt.http/content-language "de"}
 
    {:id 3
-    ::http/content-type "text/plain;charset=utf-8"}])
+    :juxt.http/content-type "text/plain;charset=utf-8"}])
 
 =>
 {:juxt.pick/representation {…} ; most acceptable representation

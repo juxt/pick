@@ -1,29 +1,27 @@
-;; Copyright © 2020, JUXT LTD.
+;; Copyright © 2020-2024, JUXT LTD.
 
 (ns juxt.pick.ring-test
   (:require
    [juxt.pick.ring :as pick.ring]
-   [clojure.test :refer [deftest is]]
-   [juxt.pick :as-alias pick]
-   [juxt.http :as-alias http]))
+   [clojure.test :refer [deftest is]]))
 
-(def variants [{::http/content-type "text/html;charset=utf-8"
-                ::http/content-language "en"}
+(def variants [{:juxt.http/content-type "text/html;charset=utf-8"
+                :juxt.http/content-language "en"}
 
-              {::http/content-type "text/html;charset=utf-8"
-               ::http/content-language "de"}
+               {:juxt.http/content-type "text/html;charset=utf-8"
+                :juxt.http/content-language "de"}
 
-              {::http/content-type "text/plain;charset=utf-8"}])
+               {:juxt.http/content-type "text/plain;charset=utf-8"}])
 
 (deftest api-test
   (let [variants
-        [{::http/content-type "text/html;charset=utf-8"
-          ::http/content-language "en"}
+        [{:juxt.http/content-type "text/html;charset=utf-8"
+          :juxt.http/content-language "en"}
 
-         {::http/content-type "text/html;charset=utf-8"
-          ::http/content-language "de"}
+         {:juxt.http/content-type "text/html;charset=utf-8"
+          :juxt.http/content-language "de"}
 
-         {::http/content-type "text/plain;charset=utf-8"}]]
+         {:juxt.http/content-type "text/plain;charset=utf-8"}]]
     (is
      (=
       "en"
@@ -34,7 +32,7 @@
          :headers {"accept" "text/html"
                    "accept-language" "en, de, es"}}
         variants)
-       [::pick/representation ::http/content-language])))
+       [:juxt.pick/representation :juxt.http/content-language])))
 
     (is
      (=
@@ -46,11 +44,11 @@
          :headers {"accept" "text/html"
                    "accept-language" "de"}}
         variants)
-       [::pick/representation ::http/content-language])))
+       [:juxt.pick/representation :juxt.http/content-language])))
 
     (is
      (nil?
-      (::pick/representation
+      (:juxt.pick/representation
        (pick.ring/pick
         {:request-method :get
          :uri "/"
@@ -68,7 +66,7 @@
          :headers {"accept" "text/html"
                    "accept-language" "es, en"}}
         variants)
-       [::pick/representation ::http/content-language])))
+       [:juxt.pick/representation :juxt.http/content-language])))
 
     (is
      (=
@@ -79,7 +77,7 @@
          :uri "/"
          :headers {"accept" "text/plain"}}
         variants)
-       [::pick/representation ::http/content-type])))
+       [:juxt.pick/representation :juxt.http/content-type])))
 
     (is
      (=
@@ -90,7 +88,7 @@
          :uri "/"
          :headers {"accept" "text/html"}}
         variants)
-       [::pick/representation ::http/content-type])))
+       [:juxt.pick/representation :juxt.http/content-type])))
 
     (is
      (=
@@ -101,7 +99,7 @@
          :uri "/"
          :headers {"accept" "text/plain"}}
         variants)
-       [::pick/representation ::http/content-type])))
+       [:juxt.pick/representation :juxt.http/content-type])))
 
     (is
      (=
@@ -112,18 +110,18 @@
          :uri "/"
          :headers {"accept" "text/html;q=0.8,text/plain"}}
         variants)
-       [::pick/representation ::http/content-type])))
+       [:juxt.pick/representation :juxt.http/content-type])))
 
     (is
      (=
       ["accept" "accept-language"]
-      (::pick/vary
+      (:juxt.pick/vary
        (pick.ring/pick
         {:request-method :get
          :uri "/"
          :headers {"accept" "text/html"}}
         variants
-        {::pick/vary? true}))))))
+        {:juxt.pick/vary? true}))))))
 
 (deftest malformed-content-type-test
   (is
@@ -134,7 +132,7 @@
      {:request-method :get
       :uri "/"
       :headers {"accept" "text/html"}}
-     [{::http/content-type "texthtml"}]))))
+     [{:juxt.http/content-type "texthtml"}]))))
 
 (deftest no-metadata-key-test
   (is

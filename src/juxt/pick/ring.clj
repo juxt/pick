@@ -1,9 +1,7 @@
-;; Copyright © 2020, JUXT LTD.
+;; Copyright © 2020-2024, JUXT LTD.
 
 (ns juxt.pick.ring
   (:require
-   [juxt.http :as-alias http]
-   [juxt.pick :as-alias pick]
    [juxt.pick.impl.apache :refer [apache-select-representation]]
    [juxt.reap.alpha.regex :as re]
    [juxt.reap.alpha.ring :as reap.ring]
@@ -14,9 +12,9 @@
 (def content-encoding-decoder (rfc7231/content-encoding {}))
 
 (defn decode-maybe [rep]
-  (let [content-type (::http/content-type rep)
-        content-language (::http/content-language rep)
-        content-encoding (::http/content-encoding rep)]
+  (let [content-type (:juxt.http/content-type rep)
+        content-language (:juxt.http/content-language rep)
+        content-encoding (:juxt.http/content-encoding rep)]
 
     (when-not content-type
       (throw
@@ -51,6 +49,6 @@
   ([request representations opts]
    (apache-select-representation
     (into
-     {::pick/request-headers (reap.ring/headers->decoded-preferences (:headers request))
-      ::pick/representations (map decode-maybe representations)}
+     {:juxt.pick/request-headers (reap.ring/headers->decoded-preferences (:headers request))
+      :juxt.pick/representations (map decode-maybe representations)}
      opts))))

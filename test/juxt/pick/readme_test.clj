@@ -1,10 +1,9 @@
-;; Copyright © 2020, JUXT LTD.
+;; Copyright © 2020-2024, JUXT LTD.
 
 (ns juxt.pick.readme-test
   (:require
    [clojure.test :refer [deftest is]]
-   [juxt.pick.ring :refer [pick]]
-   [juxt.http :as-alias http]))
+   [juxt.pick.ring :refer [pick]]))
 
 (deftest readme-test
   (is
@@ -20,13 +19,13 @@
 
       ;; Possible representations
       [{:id 1
-        ::http/content-type "text/html;charset=utf-8"
-        ::http/content-language "en"}
+        :juxt.http/content-type "text/html;charset=utf-8"
+        :juxt.http/content-language "en"}
 
        {:id 2
-        ::http/content-type "text/html;charset=utf-8"
-        ::http/content-language "de"}
+        :juxt.http/content-type "text/html;charset=utf-8"
+        :juxt.http/content-language "de"}
 
        {:id 3
-        ::http/content-type "text/plain;charset=utf-8"}])
+        :juxt.http/content-type "text/plain;charset=utf-8"}])
      [:juxt.pick/representation :id]))))

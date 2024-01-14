@@ -2,9 +2,7 @@
 
 (ns juxt.pick.impl.apache
   (:require
-   [juxt.pick.core :refer [rate-representations segment-by]]
-   [juxt.http :as-alias http]
-   [juxt.pick :as-alias pick]))
+   [juxt.pick.core :refer [rate-representations segment-by]]))
 
 ;; An implementation in Clojure of Apache's httpd Negotiation Algorithm:
 ;; http://httpd.apache.org/docs/current/en/content-negotiation.html#algorithm
@@ -18,12 +16,12 @@
   "Section 2.1: 'Multiply the quality factor from the Accept header with the
   quality-of-source factor for this variants media type, and select the variants
   with the highest value.'"
-  [{::pick/keys [representations]}]
+  [{:juxt.pick/keys [representations]}]
   (let [result
         (segment-by
          representations
-         #(* (get % ::pick/content-type-qvalue 1.0)
-             (get % ::pick/quality-of-source 1.0))
+         #(* (get % :juxt.pick/content-type-qvalue 1.0)
+             (get % :juxt.pick/quality-of-source 1.0))
          >)]
     (add-meta result #'select-media-type)))
 
@@ -31,9 +29,9 @@
   ^{::step 2}
   select-languages
   "Section 2.2: 'Select the variants with the highest language quality factor.'"
-  [{::pick/keys [representations]}]
+  [{:juxt.pick/keys [representations]}]
   (let [result
-        (segment-by representations ::pick/language-qvalue >)]
+        (segment-by representations :juxt.pick/language-qvalue >)]
     (add-meta result #'select-languages)))
 
 (defn
@@ -41,9 +39,9 @@
   select-language
   "Section 2.3: 'Select the variants with the best language match, using either
   the order of languages in the Accept-Language header (if present).'"
-  [{::pick/keys [representations]}]
+  [{:juxt.pick/keys [representations]}]
   (let [result
-        (segment-by representations ::pick/language-ordering-weight >)]
+        (segment-by representations :juxt.pick/language-ordering-weight >)]
     (add-meta result #'select-language)))
 
 (defn ^{::step 5}
@@ -52,8 +50,8 @@
   on the Accept-Charset header line. Charset ISO-8859-1 is acceptable unless
   explicitly excluded. Variants with a text/* media type but not explicitly
   associated with a particular charset are assumed to be in ISO-8859-1.'"
-  [{::pick/keys [representations]}]
-  (let [result (segment-by representations ::pick/charset-qvalue >)]
+  [{:juxt.pick/keys [representations]}]
+  (let [result (segment-by representations :juxt.pick/charset-qvalue >)]
     (add-meta result #'select-charsets)))
 
 (defn
@@ -64,9 +62,9 @@
   variants. Otherwise if there is a mix of encoded and non-encoded variants,
   select only the unencoded variants. If either all variants are encoded or all
   variants are not encoded, select all variants.'"
-  [{::pick/keys [representations]}]
+  [{:juxt.pick/keys [representations]}]
   (let [result
-        (segment-by representations ::pick/encoding-qvalue >)]
+        (segment-by representations :juxt.pick/encoding-qvalue >)]
     (-> result
         (add-meta #'select-encoding))))
 
@@ -74,9 +72,9 @@
   ^{::step 8}
   select-smallest-content-length
   "Section 2.8: 'Select the variants with the smallest content length.'"
-  [{::pick/keys [representations]}]
+  [{:juxt.pick/keys [representations]}]
   (let [[representation & rejects]
-      (sort-by ::http/content-length representations)]
+      (sort-by :juxt.http/content-length representations)]
   (->
    {:representations [representation] :rejects rejects}
    (add-meta #'select-smallest-content-length))))
@@ -85,7 +83,7 @@
   ^{::step 9}
   select-first-remaining
   "Section 2.9: 'Select the first variant of those remaining.'"
-  [{::pick/keys [representations]}]
+  [{:juxt.pick/keys [representations]}]
   (let [[f & t] representations]
     (-> {:representations [f] :rejects (vec t)}
         (add-meta #'select-first-remaining))))
@@ -103,13 +101,13 @@
   :juxt.pick/inject-steps – in future, this will be used to inject additional steps
 
   "
-  [{::pick/keys [request-headers representations vary? explain?] :as opts}]
+  [{:juxt.pick/keys [request-headers representations vary? explain?] :as opts}]
   (let [rated-representations (rate-representations request-headers representations)
 
         ;; "If the Accept* header for any dimension implies that this variant is
         ;; not acceptable, eliminate it."
         acceptable
-        (filter ::pick/acceptable? rated-representations)
+        (filter :juxt.pick/acceptable? rated-representations)
 
         reductions
         (reductions
@@ -117,7 +115,7 @@
            ;; Short-circuit the algorithm when 0 or 1 representation remains.
            (if (< (count (:representations acc)) 2)
              (reduced (dissoc acc :rejects))
-             (-> (step (assoc opts ::pick/representations (:representations acc))))))
+             (-> (step (assoc opts :juxt.pick/representations (:representations acc))))))
 
          {:representations acceptable
           :rejects []}
@@ -145,10 +143,10 @@
           ])]
 
     (cond->
-        {::pick/representation (first (:representations (last reductions)))
-         ::pick/representations rated-representations}
+        {:juxt.pick/representation (first (:representations (last reductions)))
+         :juxt.pick/representations rated-representations}
         vary?
-        (conj [::pick/vary
+        (conj [:juxt.pick/vary
                (cond-> []
                  (> (count (distinct (keep :juxt.reap.alpha.rfc7231/content-type representations))) 1)
                  (conj "accept")
@@ -159,12 +157,12 @@
                  (> (count (distinct (keep (comp #(get % "charset") :juxt.reap.alpha.rfc7231/parameter-map :juxt.reap.alpha.rfc7231/content-type) representations))) 1)
                  (conj "accept-charset"))])
 
-        explain? (conj [::pick/rejects
+        explain? (conj [:juxt.pick/rejects
                         (reduce
                          (fn [rejects reduction]
                            (->> (:rejects reduction)
                                 (map (fn [res]
-                                       (assoc res ::pick/rejected-by (::fn-meta reduction))))
+                                       (assoc res :juxt.pick/rejected-by (::fn-meta reduction))))
                                 (into rejects)))
                          [] reductions)]
-                       [::pick/reductions reductions]))))
+                       [:juxt.pick/reductions reductions]))))
