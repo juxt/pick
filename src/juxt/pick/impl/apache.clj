@@ -148,13 +148,13 @@
         vary?
         (conj [:juxt.pick/vary
                (cond-> []
-                 (> (count (distinct (keep :juxt.reap.alpha.rfc7231/content-type representations))) 1)
+                 (> (count (distinct (keep :juxt.reap.rfc7231/content-type representations))) 1)
                  (conj "accept")
-                 (> (count (distinct (keep :juxt.reap.alpha.rfc7231/content-encoding representations))) 1)
+                 (> (count (distinct (keep :juxt.reap.rfc7231/content-encoding representations))) 1)
                  (conj "accept-encoding")
-                 (> (count (distinct (keep :juxt.reap.alpha.rfc7231/content-language representations))) 1)
+                 (> (count (distinct (keep :juxt.reap.rfc7231/content-language representations))) 1)
                  (conj "accept-language")
-                 (> (count (distinct (keep (comp #(get % "charset") :juxt.reap.alpha.rfc7231/parameter-map :juxt.reap.alpha.rfc7231/content-type) representations))) 1)
+                 (> (count (distinct (keep (comp #(get % "charset") :juxt.reap.rfc7231/parameter-map :juxt.reap.rfc7231/content-type) representations))) 1)
                  (conj "accept-charset"))])
 
         explain? (conj [:juxt.pick/rejects

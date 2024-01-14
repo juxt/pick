@@ -3,9 +3,9 @@
 (ns juxt.pick.ring
   (:require
    [juxt.pick.impl.apache :refer [apache-select-representation]]
-   [juxt.reap.alpha.regex :as re]
-   [juxt.reap.alpha.ring :as reap.ring]
-   [juxt.reap.alpha.decoders.rfc7231 :as rfc7231]))
+   [juxt.reap.regex :as re]
+   [juxt.reap.ring :as reap.ring]
+   [juxt.reap.decoders.rfc7231 :as rfc7231]))
 
 (def content-type-decoder (rfc7231/content-type {}))
 (def content-language-decoder (rfc7231/content-language {}))
@@ -33,19 +33,19 @@
     ;; multiple times in the same request.
 
     (cond-> rep
-      (and content-type (not (:juxt.reap.alpha.rfc7231/content-type rep)))
-      (assoc :juxt.reap.alpha.rfc7231/content-type
+      (and content-type (not (:juxt.reap.rfc7231/content-type rep)))
+      (assoc :juxt.reap.rfc7231/content-type
              (or (content-type-decoder (re/input content-type))
                  (throw (ex-info "Malformed content-type" {:input content-type}))))
 
-      (and content-language (not (:juxt.reap.alpha.rfc7231/content-language rep)))
-      (assoc :juxt.reap.alpha.rfc7231/content-language
+      (and content-language (not (:juxt.reap.rfc7231/content-language rep)))
+      (assoc :juxt.reap.rfc7231/content-language
              (or
               (content-language-decoder (re/input content-language))
               (throw (ex-info "Malformed content-language" {:input content-language}))))
 
-      (and content-encoding (not (:juxt.reap.alpha.rfc7231/content-encoding rep)))
-      (assoc :juxt.reap.alpha.rfc7231/content-encoding
+      (and content-encoding (not (:juxt.reap.rfc7231/content-encoding rep)))
+      (assoc :juxt.reap.rfc7231/content-encoding
              (or
               (content-encoding-decoder (re/input content-encoding))
               (throw (ex-info "Malformed content-encoding" {:input content-encoding}))))

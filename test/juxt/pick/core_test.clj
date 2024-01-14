@@ -9,7 +9,7 @@
             assign-language-quality basic-language-match?
             assign-language-ordering
             acceptable-encoding-qvalue assign-encoding-quality]]
-   [juxt.reap.alpha.decoders :as rdec]))
+   [juxt.reap.decoders :as rdec]))
 
 (defn round [n]
   (when n
@@ -134,22 +134,22 @@
 (deftest assign-encoding-quality-test
   (let [representations
         [{:id :gzip
-          :juxt.reap.alpha.rfc7231/content-encoding
+          :juxt.reap.rfc7231/content-encoding
           (rdec/content-encoding "gzip")}
 
          {:id :deflate
-          :juxt.reap.alpha.rfc7231/content-encoding
+          :juxt.reap.rfc7231/content-encoding
           (rdec/content-encoding "deflate")}
 
          {:id :gzip-then-deflate
-          :juxt.reap.alpha.rfc7231/content-encoding
+          :juxt.reap.rfc7231/content-encoding
           (rdec/content-encoding "gzip,deflate")}
 
          {:id :identity
-          :juxt.reap.alpha.rfc7231/content-encoding
+          :juxt.reap.rfc7231/content-encoding
           (rdec/content-encoding "identity")}
 
-         ;; :juxt.reap.alpha.rfc7231/content-encoding defaults to 'identity'
+         ;; :juxt.reap.rfc7231/content-encoding defaults to 'identity'
          {:id :unspecified}]]
 
     (are [accept-encoding-header expected]
@@ -296,19 +296,19 @@
 (deftest basic-language-match-test
   (is
    (basic-language-match?
-    (:juxt.reap.alpha.rfc4647/language-range (first (rdec/accept-language "en")))
-    (:juxt.reap.alpha.rfc5646/langtag (first (rdec/content-language "en")))))
+    (:juxt.reap.rfc4647/language-range (first (rdec/accept-language "en")))
+    (:juxt.reap.rfc5646/langtag (first (rdec/content-language "en")))))
 
   (is
    (basic-language-match?
-    (:juxt.reap.alpha.rfc4647/language-range (first (rdec/accept-language "de-de")))
-    (:juxt.reap.alpha.rfc5646/langtag (first (rdec/content-language "de-DE-1996")))))
+    (:juxt.reap.rfc4647/language-range (first (rdec/accept-language "de-de")))
+    (:juxt.reap.rfc5646/langtag (first (rdec/content-language "de-DE-1996")))))
 
   (is
    (not
     (basic-language-match?
-     (:juxt.reap.alpha.rfc4647/language-range (first (rdec/accept-language "de-de")))
-     (:juxt.reap.alpha.rfc5646/langtag (first (rdec/content-language "de-Latn-DE"))))))
+     (:juxt.reap.rfc4647/language-range (first (rdec/accept-language "de-de")))
+     (:juxt.reap.rfc5646/langtag (first (rdec/content-language "de-Latn-DE"))))))
 
   ;; "At all times, language tags and their subtags, including private use and
   ;; extensions, are to be treated as case insensitive: there exist conventions
@@ -317,19 +317,19 @@
   (is
    (not
     (basic-language-match?
-     (:juxt.reap.alpha.rfc4647/language-range (first (rdec/accept-language "de-de")))
-     (:juxt.reap.alpha.rfc5646/langtag (first (rdec/content-language "DE-LATN-DE"))))))
+     (:juxt.reap.rfc4647/language-range (first (rdec/accept-language "de-de")))
+     (:juxt.reap.rfc5646/langtag (first (rdec/content-language "DE-LATN-DE"))))))
 
   (is
    (not
     (basic-language-match?
-     (:juxt.reap.alpha.rfc4647/language-range (first (rdec/accept-language "en-gb")))
-     (:juxt.reap.alpha.rfc5646/langtag (first (rdec/content-language "en"))))))
+     (:juxt.reap.rfc4647/language-range (first (rdec/accept-language "en-gb")))
+     (:juxt.reap.rfc5646/langtag (first (rdec/content-language "en"))))))
 
   (is
    (basic-language-match?
-    (:juxt.reap.alpha.rfc4647/language-range (first (rdec/accept-language "*")))
-    (:juxt.reap.alpha.rfc5646/langtag (first (rdec/content-language "de"))))))
+    (:juxt.reap.rfc4647/language-range (first (rdec/accept-language "*")))
+    (:juxt.reap.rfc5646/langtag (first (rdec/content-language "de"))))))
 
 ;; TODO: Implement this test
 ;; RFC 7231 Section 5.3.5:
@@ -344,25 +344,25 @@
   (let [variants
         [;; Hello!
          {:id :en
-          :juxt.reap.alpha.rfc7231/content-language
+          :juxt.reap.rfc7231/content-language
           (rdec/content-language "en")}
 
          ;; Howdy!
          ;; (Not everyone in the US uses 'Howdy!' but this is just a test…)
          ;; https://en.wikipedia.org/wiki/Howdy
          {:id :en-us
-          :juxt.reap.alpha.rfc7231/content-language
+          :juxt.reap.rfc7231/content-language
           (rdec/content-language "en-US")}
 
          ;; ألسّلام عليكم
          {:id :ar-eg
-          :juxt.reap.alpha.rfc7231/content-language
+          :juxt.reap.rfc7231/content-language
           (rdec/content-language "ar-eg")}
 
          ;; Content that requires the reader to understand both English and Arabic
          ;; Hello: ألسّلام عليكم
          {:id :ar-eg-and-en
-          :juxt.reap.alpha.rfc7231/content-language
+          :juxt.reap.rfc7231/content-language
           (rdec/content-language "ar-eg,en")}
 
          ;; Unlike with encoding, if no content-language is specified we don't

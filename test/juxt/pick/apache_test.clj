@@ -4,8 +4,8 @@
   (:require
    [clojure.test :refer [deftest is are]]
    [juxt.pick.impl.apache :refer [apache-select-representation]]
-   [juxt.reap.alpha.decoders :as reap]
-   [juxt.reap.alpha.rfc7231 :as rfc7231]))
+   [juxt.reap.decoders :as reap]
+   [juxt.reap.rfc7231 :as rfc7231]))
 
 (deftest accept-test
 
