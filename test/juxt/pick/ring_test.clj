@@ -144,3 +144,24 @@
       :uri "/"
       :headers {"accept" "text/html"}}
      [{}]))))
+
+
+(deftest string-key-test
+  (let [variants
+        [{"content-type" "text/html;charset=utf-8"
+          "content-language" "en"}
+
+         {"content-type" "text/html;charset=utf-8"
+          "content-language" "de"}
+
+         {"content-type" "text/plain;charset=utf-8"}]]
+    (is (=
+         "en"
+         (get-in
+          (pick.ring/pick
+           {:request-method :get
+            :uri "/"
+            :headers {"accept" "text/html"
+                      "accept-language" "en, de, es"}}
+           variants)
+          [:juxt.pick/representation "content-language"])))))

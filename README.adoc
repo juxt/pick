@@ -120,6 +120,19 @@ The option map supports the following entries:
 |:juxt.pick/vary?|if truthy, compute the preferences that will vary the choice
 |===
 
+=== Alternative: Use strings as keywords
+
+For convenience, a representation can be provided with either keywords in the `juxt.http` namespace, or plain strings, or a mix of both.
+
+[%header,cols="1m,1m"]
+|===
+|keyword|string alternative
+|:juxt.http/content-type|"content-type"
+|:juxt.http/content-encoding|"content-encoding"
+|:juxt.http/content-language|"content-language"
+|:juxt.http/content-length|"content-length"
+|===
+
 === Alternatives
 
 Most Clojure alternatives only deal with media-types, and perhaps charsets. Note

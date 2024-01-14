@@ -12,9 +12,16 @@
 (def content-encoding-decoder (rfc7231/content-encoding {}))
 
 (defn decode-maybe [rep]
-  (let [content-type (:juxt.http/content-type rep)
-        content-language (:juxt.http/content-language rep)
-        content-encoding (:juxt.http/content-encoding rep)]
+  (let [content-type (or (get rep "content-type")
+                         (:juxt.http/content-type rep))
+        content-language (or (get rep "content-language")
+                             (:juxt.http/content-language rep))
+        content-encoding (or (get rep "content-encoding")
+                             (:juxt.http/content-encoding rep))
+        ;; If content-length is given as a string key with a string
+        ;; value, we parse the string into a long since it may be
+        ;; required as a sorting key in the selection algorithm.
+        content-length (get rep "content-length")]
 
     (when-not content-type
       (throw
@@ -41,7 +48,12 @@
       (assoc :juxt.reap.alpha.rfc7231/content-encoding
              (or
               (content-encoding-decoder (re/input content-encoding))
-              (throw (ex-info "Malformed content-encoding" {:input content-encoding})))))))
+              (throw (ex-info "Malformed content-encoding" {:input content-encoding}))))
+
+      (string? content-length)
+      (assoc :juxt.http/content-length (Long/parseLong content-length)))))
+
+
 
 (defn pick
   ([request representations]
